@@ -6,17 +6,32 @@ in VS_OUTPUT {
     vec3 normal;
 } IN;
 
-const vec3 light_pos = vec3(0.0, 100.0, 0.0);
+const vec3 light_pos = vec3(0.0, 1000.0, -100.0);
 const vec3 light_col = vec3(1.);
 const vec3 ambient_light = vec3(0.7255, 0.9216, 0.9804);
 const vec3 albedo = vec3(0.0706, 0.3608, 0.2157);
 
 uniform vec3 w_camera_position;
+uniform mat4 model;
+uniform int size;
+
+float total_size = 2*float(size);
+float min_spread = 10*total_size;
 
 out vec4 out_color;
 
-
 #define OCTAVES 3
+
+#define MIN_HEIGHT 30.0
+#define AMP_HEIGHT 50.0
+
+/************************ NOISE ***************/
+
+mat2 Rotate(float th) {
+    return mat2(cos(th), sin(th), -sin(th), cos(th)); 
+}
+
+
 float random(in vec2 uv)
 {
     return fract(sin(dot(uv.xy, 
@@ -43,33 +58,44 @@ float noise (in vec2 _st) {
             (d - b) * u.x * u.y;
 }
 
-// height displacement
-float fbm(in vec2 p) {
+float fbm (vec2 p, float amp, float gain, float freq, float lacunarity) {
     float value = 0.;
-    float gain = 1.0;
-    float amp = 10.5;
+    //loop
     for (int i = 0; i < OCTAVES; i++) {
-        value += amp * noise(p);
-        amp *= gain + .1;
+        value += amp * noise(vec2(p.x * freq, p.y * freq));
+        amp *= gain;
+        freq *= lacunarity;
     }
     return value;
 }
+
+
+/***************************************************/
+
 float gaussian_volcano(vec2 p) {
-    vec2 temp = -(p+13)*(p+13)/0.2;
-    return 500.*exp(temp.x + temp.y);
+    float translate = MIN_HEIGHT*3.0;
+    vec2 temp = -(p+translate)*(p+translate) / min_spread;
+    vec2 temp2 = -(p+translate)*(p+translate)/30.0;
+    //loat noise = fbm(p, 0.2 + sin(p.y*2.)*0.6 * sin(p.x*2.)*0.9 - cos(1.1)*0.9, .8);
+    return AMP_HEIGHT*(4.0*exp(temp.x + temp.y) - 30.0*exp(temp2.x + temp2.y));
 }
 
 float gaussian_map(vec2 p) {
-    vec2 temp1 = -p*p/11.0;
-    vec2 temp2 = -p*p;
-    vec2 temp3 = -(p-6)*(p-6)/3.0;
-    vec2 temp4 = -(p+6)*(p+6)/30.0;
-
-    return 3*exp(temp1.x + temp1.y) - 3*exp(temp2.x + temp2.y) + 2*exp(temp3.x + temp3.y) + exp((temp4.x + temp4.y)/2.0);
+    float loc1 = (size-3.0)/2.0;     
+    float loc2 = (size-2.8)/2.0;     
+    float loc3 = (size-1.2)/2.0;     
+    vec2 temp = -(p+loc1)*(p+loc1) / min_spread;
+    vec2 temp2 = -(p-loc2)*(p-loc2) / (min_spread*2.);
+    vec2 temp3 = -(p-loc3)*(p-loc3) / (min_spread*3.2);
+    vec2 temp4 = -(p-loc1)*(p-loc1) / (min_spread*0.7);
+    vec2 temp5 = -(p-loc3)*(p-loc3) / min_spread;
+    return AMP_HEIGHT*(1.5*exp(temp.x + temp.y) + 1.8*exp(temp2.x + temp2.y) + exp(temp3.x + temp3.y));
 }
 
+
 float height_terrain(in vec2 p) {
-    return gaussian_volcano(p);
+    float noise = fbm(p, 1.0, 0.7, 0.01, 2.0);
+    return 10.0*noise;
 }
 
 vec3 get_normal(vec3 p) {
@@ -97,13 +123,10 @@ void main() {
     vec3 diffuse = dif * light_col;
 
     // specular light
-    float spec = pow(max(dot(n, h), 0.0), 32);
-    vec3 specular = spec * albedo;
+    float spec = pow(max(dot(n, h), 0.0), 256);
+    vec3 specular = spec * light_col;
 
-    out_color.rgb = specular + ambient + diffuse;
-
-    // if (p.x > 256 && p.z > 256)
-    //     out_color.rgb = noise(p.xz);
-    //out_color.rgb = pow(out_color.rgb, vec3(1.0/2.2)); // gamma correction
-    out_color = vec4(1.);
+    out_color.rgb = specular*0.5 + ambient + diffuse * albedo;
+    out_color.rgb = pow(out_color.rgb, vec3(1.0/2.2)); // gamma correction
 }
+    

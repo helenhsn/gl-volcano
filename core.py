@@ -8,12 +8,11 @@ import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 import assimpcy                     # 3D resource loader
-import glm
 
 
 # our transform functions
-from transform import Trackball, identity, vec
-from camera import Camera
+from utils.transform import Trackball, identity, vec, translate
+from utils.camera import Camera
 # initialize and automatically terminate glfw on exit
 glfw.init()
 atexit.register(glfw.terminate)
@@ -41,7 +40,6 @@ class Shader:
 
     def __init__(self, vertex_source, fragment_source, debug=False):
         """ Shader can be initialized with raw strings or source file names """
-        print(vertex_source)
         vert = self._compile_shader(vertex_source, GL.GL_VERTEX_SHADER)
         frag = self._compile_shader(fragment_source, GL.GL_FRAGMENT_SHADER)
         if vert and frag:
@@ -51,6 +49,36 @@ class Shader:
             GL.glLinkProgram(self.glid)
             GL.glDeleteShader(vert)
             GL.glDeleteShader(frag)
+            status = GL.glGetProgramiv(self.glid, GL.GL_LINK_STATUS)
+            if not status:
+                print(GL.glGetProgramInfoLog(self.glid).decode('ascii'))
+                os._exit(1)
+
+        # get location, size & type for uniform variables using GL introspection
+        self.uniforms = {}
+        self.debug = debug
+        get_name = {int(k): str(k).split()[0] for k in self.GL_SETTERS.keys()}
+        for var in range(GL.glGetProgramiv(self.glid, GL.GL_ACTIVE_UNIFORMS)):
+            name, size, type_ = GL.glGetActiveUniform(self.glid, var)
+            name = name.decode().split('[')[0]   # remove array characterization
+            args = [GL.glGetUniformLocation(self.glid, name), size]
+            # add transpose=True as argument for matrix types
+            if type_ in {GL.GL_FLOAT_MAT2, GL.GL_FLOAT_MAT3, GL.GL_FLOAT_MAT4}:
+                args.append(True)
+            if debug:
+                call = self.GL_SETTERS[type_].__name__
+                print(f'uniform {get_name[type_]} {name}: {call}{tuple(args)}')
+            self.uniforms[name] = (self.GL_SETTERS[type_], args)
+
+    @classmethod
+    def new_compute(self, compute_source, debug=False):
+        print(compute_source)
+        comp = self._compile_shader(compute_source, GL.GL_COMPUTE_SHADER)
+        if comp:
+            self.glid = GL.glCreateProgram()  # pylint: disable=E1111
+            GL.glAttachShader(self.glid, comp)
+            GL.glLinkProgram(self.glid)
+            GL.glDeleteShader(comp)
             status = GL.glGetProgramiv(self.glid, GL.GL_LINK_STATUS)
             if not status:
                 print(GL.glGetProgramInfoLog(self.glid).decode('ascii'))
@@ -74,7 +102,7 @@ class Shader:
             self.uniforms[name] = (self.GL_SETTERS[type_], args)
 
     def set_uniforms(self, uniforms):
-        #print("u = ",self.uniforms.keys(), uniforms.keys())
+        print("u = ",self.uniforms.keys(), uniforms.keys())
         """ set only uniform variables that are known to shader """
         for name in uniforms.keys() & self.uniforms.keys():
             set_uniform, args = self.uniforms[name]
@@ -99,6 +127,23 @@ class Shader:
         GL.GL_FLOAT_MAT4: GL.glUniformMatrix4fv,
     }
 
+    def set_image2d_read(self, name, image):
+        loc = GL.glGetUniformLocation(self.glid, name)
+        if loc !=1:
+            GL.glBindImageTexture(loc, image.glid, 0, GL.GL_FALSE, 0, GL.GL_READ_ONLY, image.internal_format)
+    
+    def set_image2d_read_write(self, name, image):
+        loc = GL.glGetUniformLocation(self.glid, name)
+        if loc !=1:
+            GL.glBindImageTexture(loc, image.glid, 0, GL.GL_FALSE, 0, GL.GL_READ_WRITE, image.internal_format)
+
+    def set_image2d_write(self, name, image):
+        loc = GL.glGetUniformLocation(self.glid, name)
+        if loc !=1:
+            GL.glBindImageTexture(loc, image.glid, 0, GL.GL_FALSE, 0, GL.GL_WRITE_ONLY, image.internal_format)
+
+    def bind(self):
+        GL.glUseProgram(self.glid)
 
 class VertexArray:
     """ helper class to create and self destroy OpenGL vertex array objects."""
@@ -182,11 +227,11 @@ class Node:
         """ Add drawables to this node, simply updating children list """
         self.children.extend(drawables)
 
-    def draw(self, model=identity(), **other_uniforms):
+    def draw(self, t, model=identity(), **other_uniforms):
         """ Recursive draw, passing down updated model matrix. """
         self.world_transform = model @ self.transform
         for child in self.children:
-            child.draw(model=self.world_transform, **other_uniforms)
+            child.draw(t=t, model=self.world_transform, **other_uniforms)
 
     def key_handler(self, key):
         """ Dispatch keyboard events to children with key handler """
@@ -341,8 +386,18 @@ def load(file, shader, tex_file=None, **params):
 class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
 
-    def __init__(self, width=1200, height=800):
+    def __init__(self, width=1500, height=1000, size=128):
         super().__init__()
+
+        # terrain/ocean mesh related attributes
+        self.chunk_size = size
+        print("chunk size = ", self.chunk_size)
+        translation_factor = size-1
+        self.translation_arrays = np.array([(0.0, 0.0, 0.0), (0.0, 0.0, -translation_factor), (-translation_factor, 0.0, 0.0), (-translation_factor, 0.0, -translation_factor)])
+
+        # camera related attributes
+        self.previous_mouse_pos = vec(0.0, 0.0)
+        self.first_mouse_move = True
 
         # version hints: create GL window with >= OpenGL 3.3 and core profile
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
@@ -358,6 +413,7 @@ class Viewer(Node):
         # initialize trackball
         self.camera = Camera()
         self.mouse = (0, 0)
+        self.mouse_move = False
 
         self.delta_time = 0.0
         self.last_frame = 0.0
@@ -365,6 +421,7 @@ class Viewer(Node):
         # register event handlers
         glfw.set_key_callback(self.win, self.on_key)
         glfw.set_cursor_pos_callback(self.win, self.on_mouse_move)
+        glfw.set_mouse_button_callback(self.win, self.on_mouse_click)
         glfw.set_window_size_callback(self.win, self.on_size)
 
         # useful message to check OpenGL renderer characteristics
@@ -382,6 +439,7 @@ class Viewer(Node):
 
     def run(self):
         """ Main render loop for this OpenGL window """
+        N = 2 #number of chunks
         while not glfw.window_should_close(self.win):
 
             GL.glClearColor(0.2, 0.1, 0.4, 0.1)
@@ -394,10 +452,17 @@ class Viewer(Node):
             self.delta_time = current_frame - self.last_frame
             self.last_frame = current_frame
 
+            view_matrix = self.camera.view_matrix()
+            projection_matrix = self.camera.projection_matrix(win_size)
             # draw our scene objects
-            self.draw(view=self.camera.view_matrix(),
-                      projection=self.camera.projection_matrix(win_size),
-                      w_camera_position=self.camera.camera_pos)
+            for arr in self.translation_arrays:
+                model_matrix = translate(arr)
+                self.draw(t=current_frame, view=view_matrix,
+                        projection=projection_matrix,
+                        model=model_matrix,
+                        w_camera_position=self.camera.camera_pos)
+                
+                    
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
@@ -420,10 +485,21 @@ class Viewer(Node):
             self.key_handler(key)
 
     def on_mouse_move(self, win, xpos, ypos):
-        """ Rotate on left-click & drag, pan on right-click & drag """
-        self.mouse = (xpos,  glfw.get_window_size(win)[1] - ypos)
-        self.camera.handle_mouse_movement(self.mouse)
+        if self.mouse_move:
+            self.mouse = (xpos,  ypos)
+            if self.first_mouse_move:
+                self.previous_mouse_pos = self.mouse
+                self.first_mouse_move = False
+            else:
+                offset_x = self.mouse[0] - self.previous_mouse_pos[0]
+                offset_y = self.mouse[1] - self.previous_mouse_pos[1]
+                self.camera.handle_mouse_movement(offset_x, offset_y)
+                self.previous_mouse_pos = self.mouse
 
+    def on_mouse_click(self, win, button, action, mods):
+        if action == glfw.PRESS and button == glfw.MOUSE_BUTTON_LEFT:
+            self.mouse_move = not self.mouse_move
+            self.first_mouse_move = True
 
     def on_size(self, _win, _width, _height):
         """ window size update => update viewport to new framebuffer size """

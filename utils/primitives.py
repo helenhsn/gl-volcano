@@ -50,7 +50,7 @@ class Grid(Mesh):
             for y in range (0, size):
                 x = float(x)
                 y = float(y)
-                vertices.append((x-size/2, 0.0, y-size/2))
+                vertices.append((x, 0.0, y))
                 normals.append((0.0, 1.0, 0.0))
                 uv.append((x/(size-1), y/(size-1)))
 
@@ -60,6 +60,7 @@ class Grid(Mesh):
 
         for x in range(0, size-1):
             for y in range (0,size-1): # for each unit square in the mesh grid
+                
                 # first triangle : bottom left -> bottom right -> top left (counterclockwise)
                 indices.append(x * size + y)
                 indices.append((x+1)*size + y)
@@ -69,7 +70,6 @@ class Grid(Mesh):
                 indices.append(x * size + y + 1)
                 indices.append((x+1)*size + y)
                 indices.append((x+1)*size + y + 1)
-
         super().__init__(shader, attributes=dict(position=vertices, uv=uv, normal=normals), index=indices)
     
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):

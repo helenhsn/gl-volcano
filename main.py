@@ -3,18 +3,17 @@
 Python OpenGL practical application.
 """
 
+from utils.primitives import Axis
+from world.block import Chunk
 import sys                          # for system arguments
 
 # External, non built-in modules
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
-import numpy as np                  # all matrix manipulations & OpenGL args
-import glfw                         # lean window system wrapper for OpenGL
 
-from core import Shader, Mesh, Viewer, Node, load
-from primitives import Cylinder, Triangle
-from terrain.terrain import Terrain
-from transform import *
-from animation import *
+from core import Shader, Viewer, Node
+
+from utils.transform import *
+from utils.animation import *
 
 
 # -------------- rotation ----------------------------------------------------
@@ -34,9 +33,11 @@ class RotationControlNode(Node):
 # -------------- main program and scene setup --------------------------------
 def main():
     """ create a window, add scene objects, then run rendering loop """
-    viewer = Viewer()
-    viewer.add(Terrain(512))
-    #viewer.add(Terrain(3000))
+    CHUNK_SIZE = 1024 #nb of vertices per chunk side
+    viewer = Viewer(size=CHUNK_SIZE)
+
+    viewer.add(Chunk(CHUNK_SIZE)) # one mesh grid !
+    viewer.add(Axis(Shader("world/ocean/shaders/ocean.vert", "world/ocean/shaders/ocean.frag")))
     # start rendering loop
     viewer.run()
 

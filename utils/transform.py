@@ -17,6 +17,9 @@ def vec(*iterable):
     """ shortcut to make numpy vector of any iterable(tuple...) or vector """
     return np.asarray(iterable if len(iterable) > 1 else iterable[0], 'f')
 
+def length_sq(vector):
+    return sum(vector*vector)
+
 
 def normalized(vector):
     """ normalized version of any vector, with zero division check """

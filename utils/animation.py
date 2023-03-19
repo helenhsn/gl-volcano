@@ -7,7 +7,7 @@ import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 
 from core import Node
-from transform import (lerp, quaternion_slerp, quaternion_matrix, translate,
+from utils.transform import (lerp, quaternion_slerp, quaternion_matrix, translate,
                        scale, identity)
 
 
