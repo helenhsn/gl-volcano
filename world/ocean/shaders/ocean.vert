@@ -17,8 +17,8 @@ out VS_OUTPUT {
 } OUTPUT;
 
 void main() {
-    vec2 uv = fract(uv+ 1./256.);
-    vec3 d = texture(displacement, uv).rgb;
+    vec2 Uv = fract(uv+ 1./256.);
+    vec3 d = texture(displacement, Uv).rgb;
     OUTPUT.uv = uv;
     vec3 new_pos = position + d;
     OUTPUT.position = (model * vec4(new_pos,1)).xyz;

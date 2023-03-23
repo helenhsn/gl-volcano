@@ -141,7 +141,7 @@ void main() {
     float spec = pow(max(dot(n, h), 0.0), 4);
     vec3 specular = spec * light_col;
 
-    out_color.rgb = specular*0.2 + ambient + diffuse * albedo;
+    out_color.rgb = specular*0.5 + ambient + diffuse * albedo;
     //out_color.rgb = pow(out_color.rgb, vec3(1.0/2.2)); // gamma correction
 }
     
