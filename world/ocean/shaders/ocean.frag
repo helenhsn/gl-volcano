@@ -8,20 +8,11 @@ in VS_OUTPUT {
 
 #define PI 3.14159265359
 
-
-// uniforms
-uniform int N;
-uniform int L;
-
 // simulation related uniforms
-uniform sampler2D displacement;
 uniform sampler2D gradients;
-uniform sampler2D foam_text;
-uniform float wind_speed;
-uniform vec2 wind_direction;
 uniform vec3 w_camera_position;
 
-const vec3 light_pos = vec3(0.0, 1000.0, -100.0);
+const vec3 light_pos = vec3(-10000.0, 10000.0, -10000.0);
 const vec3 ambient_light = vec3(0.7255, 0.9216, 0.9804);
 const vec3 light_col=vec3(1.);
 const vec3 deep_blue=vec3(0.0157, 0.2049, 0.4384);
@@ -39,22 +30,12 @@ float fresnel(vec3 l, vec3 n){
 
 // ----------------------------------------------------------------------------
 
-float height(vec2 pos){
-    return texture(displacement,pos).g;
-}
 
 vec3 get_normal(vec3 slope){
     vec3 up = vec3(0., 1., 0.);
     vec3 n = (up - slope)/sqrt(1+slope*slope);
     return normalize(n);
 }
-
-// ----------------------------------------------------------------------------
-
-vec2 get_displacement(vec2 pos){
-    return texture(displacement, pos.xy).xz;
-}
-
 
 
 // ----------------------------------------------------------------------------
@@ -95,10 +76,9 @@ void main()
 
     float range = 25.0;
     vec3 water_color = mix(deep_blue, light_blue, smoothstep(-range, range, IN.position.y));
-    //float foam = texture(foam_text, IN.uv*5. + wind_direction*vec2(wind_speed/(N*2.))).r*10.0;
     //water_color = mix(water_color, vec3(1.0, 1.0, 1.0), smoothstep(0.8, 1.0, foam)*smoothstep(0.6, 0.3, grad.w));
 
-    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.1+ spec*0.8;
+    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.1+ spec*0.1;
 
 
     // float noise = perlin(vec3(IN.UV*300., 0.))*.28+.72;

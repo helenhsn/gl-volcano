@@ -61,6 +61,37 @@ float fbm (vec2 p, float amp, float gain, float freq, float lacunarity) {
 }
 
 
+/**************************************************/
+vec3 hash3( vec2 p )
+{
+    vec3 q = vec3( dot(p,vec2(127.1,311.7)), 
+				   dot(p,vec2(269.5,183.3)), 
+				   dot(p,vec2(419.2,371.9)) );
+	return fract(sin(q)*43758.5453);
+}
+
+float voronoise( in vec2 p, float u, float v )
+{
+	float k = 1.0+63.0*pow(1.0-v,6.0);
+
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    
+	vec2 a = vec2(0.0,0.0);
+    for( int y=-2; y<=2; y++ )
+    for( int x=-2; x<=2; x++ )
+    {
+        vec2  g = vec2( x, y );
+		vec3  o = hash3( i + g )*vec3(u,u,1.0);
+		vec2  d = g - f + o.xy;
+		float w = pow( 1.0-smoothstep(0.0,1.414,length(d)), k );
+		a += vec2(o.z*w,w);
+    }
+	
+    return a.x/a.y;
+}
+
+
 /***************************************************/
 float smin( float a, float b, float k )
 {
@@ -92,32 +123,18 @@ float volcano(vec2 p, float noise) {
     return smin(value_1, value_2, 2) + 150 + noise*1.5;
 }
 
-// float island(vec2 p, float noise) {
-//     return clamp(250.* exp(-(p.x*p.x + p.y*p.y)/(1024*300)) + noise, 130.0, 150.);
-// }
-
 
 float height_terrain(in vec2 p) {
 
-    float clamp_factor = smoothstep(-1000-100, -1000, length(p)) -1 + smoothstep(1000+100, 1000, length(p));
+    float clamp_factor = smoothstep(-1000-300, -1000, length(p)) -1 + smoothstep(1000+300, 1000, length(p));
 
     float noise = fbm(p, 100.0, .45, 0.009, 2.0); // gives a rusty appearance to our island
 
     float volcano_height = volcano(p, noise);
     volcano_height = volcano_height*(smoothstep(900.0, 0, length(p))*0.9 + 0.2);
-    return clamp_factor*(volcano_height+50);
+    return clamp_factor*(volcano_height+50) - 75;
 }
 
-vec3 get_normal(vec3 p) {
-    vec2 eps = vec2(0.01, 0.0);
-    // finite differences
-    vec3 n = vec3(
-        height_terrain(p.xz+eps.xy) - height_terrain(p.xz - eps.xy), 
-        2.0 * eps.x,
-        height_terrain(p.xz+eps.yx) - height_terrain(p.xz - eps.yy)
-        );
-    return normalize(n);
-}
 
 
 out VS_OUTPUT {
@@ -133,6 +150,6 @@ void main() {
 
     gl_Position = projection * view * model * vec4(pos, 1);
     OUTPUT.position = (model * vec4(position.x, height_terrain(world_pos.xz), position.z, 1.)).xyz;
-    OUTPUT.normal = get_normal(OUTPUT.position);
+    OUTPUT.normal = normal;
 
 }

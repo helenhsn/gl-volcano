@@ -7,213 +7,17 @@ import atexit                       # launch a function at exit
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
-import assimpcy                     # 3D resource loader
+import assimpcy
+from utils.primitives import Mesh                     # 3D resource loader
 
 
 # our transform functions
 from utils.transform import Trackball, identity, vec, translate
 from utils.camera import Camera
-# initialize and automatically terminate glfw on exit
-glfw.init()
-atexit.register(glfw.terminate)
+from world.block import Chunk
 
-
-# ------------ low level OpenGL object wrappers ----------------------------
-class Shader:
-    """ Helper class to create and automatically destroy shader program """
-    @staticmethod
-    def _compile_shader(src, shader_type):
-        src = open(src, 'r').read() if os.path.exists(src) else src
-        src = src.decode('ascii') if isinstance(src, bytes) else src
-        shader = GL.glCreateShader(shader_type)
-        GL.glShaderSource(shader, src)
-        GL.glCompileShader(shader)
-        status = GL.glGetShaderiv(shader, GL.GL_COMPILE_STATUS)
-        src = ('%3d: %s' % (i+1, l) for i, l in enumerate(src.splitlines()))
-        if not status:
-            log = GL.glGetShaderInfoLog(shader).decode('ascii')
-            GL.glDeleteShader(shader)
-            src = '\n'.join(src)
-            print('Compile failed for %s\n%s\n%s' % (shader_type, log, src))
-            os._exit(1)
-        return shader
-
-    def __init__(self, vertex_source, fragment_source, debug=False):
-        """ Shader can be initialized with raw strings or source file names """
-        vert = self._compile_shader(vertex_source, GL.GL_VERTEX_SHADER)
-        frag = self._compile_shader(fragment_source, GL.GL_FRAGMENT_SHADER)
-        if vert and frag:
-            self.glid = GL.glCreateProgram()  # pylint: disable=E1111
-            GL.glAttachShader(self.glid, vert)
-            GL.glAttachShader(self.glid, frag)
-            GL.glLinkProgram(self.glid)
-            GL.glDeleteShader(vert)
-            GL.glDeleteShader(frag)
-            status = GL.glGetProgramiv(self.glid, GL.GL_LINK_STATUS)
-            if not status:
-                print(GL.glGetProgramInfoLog(self.glid).decode('ascii'))
-                os._exit(1)
-
-        # get location, size & type for uniform variables using GL introspection
-        self.uniforms = {}
-        self.debug = debug
-        get_name = {int(k): str(k).split()[0] for k in self.GL_SETTERS.keys()}
-        for var in range(GL.glGetProgramiv(self.glid, GL.GL_ACTIVE_UNIFORMS)):
-            name, size, type_ = GL.glGetActiveUniform(self.glid, var)
-            name = name.decode().split('[')[0]   # remove array characterization
-            args = [GL.glGetUniformLocation(self.glid, name), size]
-            # add transpose=True as argument for matrix types
-            if type_ in {GL.GL_FLOAT_MAT2, GL.GL_FLOAT_MAT3, GL.GL_FLOAT_MAT4}:
-                args.append(True)
-            if debug:
-                call = self.GL_SETTERS[type_].__name__
-                print(f'uniform {get_name[type_]} {name}: {call}{tuple(args)}')
-            self.uniforms[name] = (self.GL_SETTERS[type_], args)
-
-    @classmethod
-    def new_compute(self, compute_source, debug=False):
-        print(compute_source)
-        comp = self._compile_shader(compute_source, GL.GL_COMPUTE_SHADER)
-        if comp:
-            self.glid = GL.glCreateProgram()  # pylint: disable=E1111
-            GL.glAttachShader(self.glid, comp)
-            GL.glLinkProgram(self.glid)
-            GL.glDeleteShader(comp)
-            status = GL.glGetProgramiv(self.glid, GL.GL_LINK_STATUS)
-            if not status:
-                print(GL.glGetProgramInfoLog(self.glid).decode('ascii'))
-                os._exit(1)
-
-        # get location, size & type for uniform variables using GL introspection
-        self.uniforms = {}
-        self.debug = debug
-        get_name = {int(k): str(k).split()[0] for k in self.GL_SETTERS.keys()}
-        for var in range(GL.glGetProgramiv(self.glid, GL.GL_ACTIVE_UNIFORMS)):
-            name, size, type_ = GL.glGetActiveUniform(self.glid, var)
-            print("name uniform = ", name)
-            name = name.decode().split('[')[0]   # remove array characterization
-            args = [GL.glGetUniformLocation(self.glid, name), size]
-            # add transpose=True as argument for matrix types
-            if type_ in {GL.GL_FLOAT_MAT2, GL.GL_FLOAT_MAT3, GL.GL_FLOAT_MAT4}:
-                args.append(True)
-            if debug:
-                call = self.GL_SETTERS[type_].__name__
-                print(f'uniform {get_name[type_]} {name}: {call}{tuple(args)}')
-            self.uniforms[name] = (self.GL_SETTERS[type_], args)
-
-    def set_uniforms(self, uniforms):
-        print("u = ",self.uniforms.keys(), uniforms.keys())
-        """ set only uniform variables that are known to shader """
-        for name in uniforms.keys() & self.uniforms.keys():
-            set_uniform, args = self.uniforms[name]
-            set_uniform(*args, uniforms[name])
-
-    def __del__(self):
-        GL.glDeleteProgram(self.glid)  # object dies => destroy GL object
-
-    GL_SETTERS = {
-        GL.GL_UNSIGNED_INT:      GL.glUniform1uiv,
-        GL.GL_UNSIGNED_INT_VEC2: GL.glUniform2uiv,
-        GL.GL_UNSIGNED_INT_VEC3: GL.glUniform3uiv,
-        GL.GL_UNSIGNED_INT_VEC4: GL.glUniform4uiv,
-        GL.GL_FLOAT:      GL.glUniform1fv, GL.GL_FLOAT_VEC2:   GL.glUniform2fv,
-        GL.GL_FLOAT_VEC3: GL.glUniform3fv, GL.GL_FLOAT_VEC4:   GL.glUniform4fv,
-        GL.GL_INT:        GL.glUniform1iv, GL.GL_INT_VEC2:     GL.glUniform2iv,
-        GL.GL_INT_VEC3:   GL.glUniform3iv, GL.GL_INT_VEC4:     GL.glUniform4iv,
-        GL.GL_SAMPLER_1D: GL.glUniform1iv, GL.GL_SAMPLER_2D:   GL.glUniform1iv,
-        GL.GL_SAMPLER_3D: GL.glUniform1iv, GL.GL_SAMPLER_CUBE: GL.glUniform1iv,
-        GL.GL_FLOAT_MAT2: GL.glUniformMatrix2fv,
-        GL.GL_FLOAT_MAT3: GL.glUniformMatrix3fv,
-        GL.GL_FLOAT_MAT4: GL.glUniformMatrix4fv,
-    }
-
-    def set_image2d_read(self, name, image):
-        loc = GL.glGetUniformLocation(self.glid, name)
-        if loc !=1:
-            GL.glBindImageTexture(loc, image.glid, 0, GL.GL_FALSE, 0, GL.GL_READ_ONLY, image.internal_format)
-    
-    def set_image2d_read_write(self, name, image):
-        loc = GL.glGetUniformLocation(self.glid, name)
-        if loc !=1:
-            GL.glBindImageTexture(loc, image.glid, 0, GL.GL_FALSE, 0, GL.GL_READ_WRITE, image.internal_format)
-
-    def set_image2d_write(self, name, image):
-        loc = GL.glGetUniformLocation(self.glid, name)
-        if loc !=1:
-            GL.glBindImageTexture(loc, image.glid, 0, GL.GL_FALSE, 0, GL.GL_WRITE_ONLY, image.internal_format)
-
-    def bind(self):
-        GL.glUseProgram(self.glid)
-
-class VertexArray:
-    """ helper class to create and self destroy OpenGL vertex array objects."""
-    def __init__(self, shader, attributes, index=None, usage=GL.GL_STATIC_DRAW):
-        """ Vertex array from attributes and optional index array. Vertex
-            Attributes should be list of arrays with one row per vertex. """
-
-        # create vertex array object, bind it
-        self.glid = GL.glGenVertexArrays(1)
-        GL.glBindVertexArray(self.glid)
-        self.buffers = {}  # we will store buffers in a named dict
-        nb_primitives, size = 0, 0
-
-        # load buffer per vertex attribute (in list with index = shader layout)
-        for name, data in attributes.items():
-            loc = GL.glGetAttribLocation(shader.glid, name)
-            if loc >= 0:
-                # bind a new vbo, upload its data to GPU, declare size and type
-                self.buffers[name] = GL.glGenBuffers(1)
-                data = np.array(data, np.float32, copy=False)  # ensure format
-                nb_primitives, size = data.shape
-                GL.glEnableVertexAttribArray(loc)
-                GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.buffers[name])
-                GL.glBufferData(GL.GL_ARRAY_BUFFER, data, usage)
-                GL.glVertexAttribPointer(loc, size, GL.GL_FLOAT, False, 0, None)
-
-        # optionally create and upload an index buffer for this object
-        self.draw_command = GL.glDrawArrays
-        self.arguments = (0, nb_primitives)
-        if index is not None:
-            print("oui")
-            self.buffers['index'] = GL.glGenBuffers(1)
-            index_buffer = np.array(index, np.int32, copy=False)  # good format
-            GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.buffers['index'])
-            GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, index_buffer, usage)
-            self.draw_command = GL.glDrawElements
-            self.arguments = (index_buffer.size, GL.GL_UNSIGNED_INT, None)
-
-    def execute(self, primitive, attributes=None):
-        """ draw a vertex array, either as direct array or indexed array """
-
-        # optionally update the data attribute VBOs, useful for e.g. particles
-        attributes = attributes or {}
-        for name, data in attributes.items():
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.buffers[name])
-            GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, data)
-
-        GL.glBindVertexArray(self.glid)
-        self.draw_command(primitive, *self.arguments)
-
-    def __del__(self):  # object dies => kill GL array and buffers from GPU
-        GL.glDeleteVertexArrays(1, [self.glid])
-        GL.glDeleteBuffers(len(self.buffers), list(self.buffers.values()))
-
-
-# ------------  Mesh is the core drawable -------------------------------------
-class Mesh:
-    """ Basic mesh class, attributes and uniforms passed as arguments """
-    def __init__(self, shader, attributes, index=None,
-                 usage=GL.GL_STATIC_DRAW, **uniforms):
-        self.shader = shader
-        self.uniforms = uniforms
-        self.vertex_array = VertexArray(shader, attributes, index, usage)
-
-    def draw(self, primitives=GL.GL_TRIANGLES, attributes=None, **uniforms):
-        GL.glUseProgram(self.shader.glid)
-
-        self.shader.set_uniforms({**self.uniforms, **uniforms})
-        self.vertex_array.execute(primitives, attributes)
-
+import os
+import OpenGL.GL as GL
 
 # ------------  Node is the core drawable for hierarchical scene graphs -------
 class Node:
@@ -227,11 +31,11 @@ class Node:
         """ Add drawables to this node, simply updating children list """
         self.children.extend(drawables)
 
-    def draw(self, t, model=identity(), **other_uniforms):
+    def draw(self, model=identity(), **other_uniforms):
         """ Recursive draw, passing down updated model matrix. """
         self.world_transform = model @ self.transform
         for child in self.children:
-            child.draw(t=t, model=self.world_transform, **other_uniforms)
+            child.draw(model=self.world_transform, **other_uniforms)
 
     def key_handler(self, key):
         """ Dispatch keyboard events to children with key handler """
@@ -239,18 +43,24 @@ class Node:
             child.key_handler(key)
 
 
+class Cylinder(Node):
+    """ Very simple cylinder based on provided load function """
+    def __init__(self, shader):
+        super().__init__()
+        self.add(*load('cylinder.obj', shader))  # just load cylinder from file
+
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
 
 # optionally load texture module
 try:
-    from texture import Texture, Textured
+    from utils.texture import Texture, Textured
 except ImportError:
     Texture, Textured = None, None
 
 # optionally load animation module
 try:
-    from animation import KeyFrameControlNode, Skinned
+    from utils.animation import KeyFrameControlNode, Skinned
 except ImportError:
     KeyFrameControlNode, Skinned = None, None
 
@@ -389,11 +199,9 @@ class Viewer(Node):
     def __init__(self, width=1500, height=1000, size=128):
         super().__init__()
 
-        # terrain/ocean mesh related attributes
-        self.chunk_size = size
-        print("chunk size = ", self.chunk_size)
-        translation_factor = size-1
-        self.translation_arrays = np.array([(0.0, 0.0, 0.0), (0.0, 0.0, -translation_factor), (-translation_factor, 0.0, 0.0), (-translation_factor, 0.0, -translation_factor)])
+        # initialize and automatically terminate glfw on exit
+        glfw.init()
+        atexit.register(glfw.terminate)
 
         # camera related attributes
         self.previous_mouse_pos = vec(0.0, 0.0)
@@ -437,12 +245,26 @@ class Viewer(Node):
         # cyclic iterator to easily toggle polygon rendering modes
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
+        # terrain/ocean mesh related attributes
+        self.chunk_size = size
+        print("chunk size = ", self.chunk_size)
+        self.chunk = Chunk(size)
+        translation_factor = (size-1)*4
+        self.translation_arrays = []
+        N = 4 
+        for i in range (-N, N):
+            for j in range(-N, N):
+                self.translation_arrays.append((i*translation_factor, 0.0, j*translation_factor))
+
+        print(self.translation_arrays)
+        print(len(self.translation_arrays))
+
+
     def run(self):
         """ Main render loop for this OpenGL window """
-        N = 2 #number of chunks
         while not glfw.window_should_close(self.win):
 
-            GL.glClearColor(0.2, 0.1, 0.4, 0.1)
+            GL.glClearColor(0.1, 0.9, 0.9, 0.1)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             win_size = glfw.get_window_size(self.win)
@@ -451,13 +273,13 @@ class Viewer(Node):
             current_frame = glfw.get_time()
             self.delta_time = current_frame - self.last_frame
             self.last_frame = current_frame
-
+            self.chunk.update(current_frame)
             view_matrix = self.camera.view_matrix()
             projection_matrix = self.camera.projection_matrix(win_size)
             # draw our scene objects
             for arr in self.translation_arrays:
                 model_matrix = translate(arr)
-                self.draw(t=current_frame, view=view_matrix,
+                self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
                         model=model_matrix,
                         w_camera_position=self.camera.camera_pos)

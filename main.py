@@ -3,14 +3,12 @@
 Python OpenGL practical application.
 """
 
-from utils.primitives import Axis
-from world.block import Chunk
 import sys                          # for system arguments
 
 # External, non built-in modules
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
 
-from core import Shader, Viewer, Node
+from core import Viewer, Node
 
 from utils.transform import *
 from utils.animation import *
@@ -33,11 +31,9 @@ class RotationControlNode(Node):
 # -------------- main program and scene setup --------------------------------
 def main():
     """ create a window, add scene objects, then run rendering loop """
-    CHUNK_SIZE = 1024 #nb of vertices per chunk side
+    CHUNK_SIZE = 256 #nb of vertices per chunk side
     viewer = Viewer(size=CHUNK_SIZE)
 
-    viewer.add(Chunk(CHUNK_SIZE)) # one mesh grid !
-    viewer.add(Axis(Shader("world/ocean/shaders/ocean.vert", "world/ocean/shaders/ocean.frag")))
     # start rendering loop
     viewer.run()
 
