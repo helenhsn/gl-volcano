@@ -1,14 +1,12 @@
-#version 330 core
+#version 430 core
 
-in vec3 position;
-in vec2 uv;
-in vec3 normal;
+layout (binding=0, rgba32f) uniform writeonly image2D map;
 
-uniform sampler2D map;
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+layout (local_size_x = 16, local_size_y=16) in;
+
 uniform int size;
+uniform float scale_factor;
+uniform mat4 model; // to get world pos
 
 
 float total_size = 2*float(size);
@@ -29,7 +27,7 @@ float random(in vec2 uv)
                  43758.5453123);
 }
 
-// Based on Morgan McGuire @morgan3d
+// Based on Morgan McGuire @morgan3d -> value noise
 // https://www.shadertoy.com/view/4dS3Wd
 float noise (in vec2 _st) {
     vec2 i = floor(_st);
@@ -52,7 +50,7 @@ float fbm (vec2 p, float amp, float gain, float freq, float lacunarity) {
     float value = 0.;
     //loop
     for (int i = 0; i < OCTAVES; i++) {
-        value += amp * noise(vec2(p.x * freq, p.y * freq));
+        value += amp * noise(p * freq);
         amp *= gain;
         freq *= lacunarity;
     }
@@ -103,31 +101,21 @@ float height_terrain(in vec2 p) {
 }
 
 
-vec3 get_normal(vec3 p) {
+vec3 get_normal(vec2 p) {
     vec2 eps = vec2(0.01, 0.0);
     // finite differences
     vec3 n = vec3(
-        height_terrain(p.xz+eps.xy) - height_terrain(p.xz - eps.xy), 
+        height_terrain(p+eps.xy) - height_terrain(p - eps.xy), 
         2.0 * eps.x,
-        height_terrain(p.xz+eps.yx) - height_terrain(p.xz - eps.yy)
+        height_terrain(p+eps.yx) - height_terrain(p - eps.yy)
         );
     return normalize(n);
 }
 
-out VS_OUTPUT {
-    vec3 position;
-    vec2 uv;
-    vec3 normal;
-} OUTPUT;
-
 void main() {
-    OUTPUT.uv = uv;
-
-    vec4 map_coefs = texture(map, uv);
+    ivec2 x	= ivec2(gl_GlobalInvocationID.xy);
     
-    vec3 pos = vec3(position.x, map_coefs.x, position.z);
-    OUTPUT.position = (model * vec4(pos, 1.)).xyz;
-    gl_Position = projection * view * vec4(OUTPUT.position, 1);
-    OUTPUT.normal = map_coefs.yzw;
+    vec3 world_pos = (transpose(model) * vec4(x.x * scale_factor, 0., x.y*scale_factor, 1.)).xyz;
 
+    imageStore(map, x, vec4(height_terrain(world_pos.xz), get_normal(world_pos.xz)));
 }

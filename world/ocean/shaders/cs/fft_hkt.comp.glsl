@@ -3,11 +3,11 @@
 
 layout(local_size_x=16,local_size_y=16) in;
 
-layout(binding=0,rg32f) writeonly uniform image2D tilde_hkt_dy;//height displacement
+layout(binding=0,rg32f) writeonly uniform image2D tilde_hkt_dy; // height
 
-layout(binding=1,rg32f) writeonly uniform image2D Dt_dx_dz;//choppy-x displacement
+layout(binding=1,rg32f) writeonly uniform image2D Dt_dx_dz; // choppiness
 
-layout(binding=2,rg32f) readonly uniform image2D tilde_h0k;
+layout(binding=2,rg32f) readonly uniform image2D tilde_h0k; // initial factors
 
 uniform int N;// resolution
 uniform int L;// ocean size mesh

@@ -247,17 +247,7 @@ class Viewer(Node):
 
         # terrain/ocean mesh related attributes
         self.chunk_size = size
-        print("chunk size = ", self.chunk_size)
-        self.chunk = Chunk(size)
-        translation_factor = (size-1)*4
-        self.translation_arrays = []
-        N = 4 
-        for i in range (-N, N):
-            for j in range(-N, N):
-                self.translation_arrays.append((i*translation_factor, 0.0, j*translation_factor))
-
-        print(self.translation_arrays)
-        print(len(self.translation_arrays))
+        self.chunk = Chunk(size, 4)        
 
 
     def run(self):
@@ -277,11 +267,9 @@ class Viewer(Node):
             view_matrix = self.camera.view_matrix()
             projection_matrix = self.camera.projection_matrix(win_size)
             # draw our scene objects
-            for arr in self.translation_arrays:
-                model_matrix = translate(arr)
-                self.chunk.draw(view=view_matrix,
+            
+            self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
-                        model=model_matrix,
                         w_camera_position=self.camera.camera_pos)
                 
                     

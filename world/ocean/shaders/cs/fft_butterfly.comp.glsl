@@ -1,6 +1,5 @@
 #version 430
 
-#define PI		3.1415926535897932
 #define TWO_PI	6.2831853071795864
 #define RES 256
 #define LOG2_RES 8
@@ -8,7 +7,7 @@
 layout (rg32f, binding = 0) uniform readonly image2D readbuff;
 layout (rg32f, binding = 1) uniform writeonly image2D writebuff;
 
-vec2 ComplexMul(vec2 z, vec2 w) {
+vec2 mul(vec2 z, vec2 w) { // multiplication btwn 2 complex 2D vectors
 	return vec2(z.x * w.x - z.y * w.y, z.y * w.x + z.x * w.y);
 }
 
@@ -35,7 +34,7 @@ void main()
 		int mh = m >> 1;			// butterfly group half height
 
 		// k = n * N / 2^stage)
-		int k = (x * (RES / m)) & (RES - 1);
+		int k = (x * (RES / m));
 		int i = (x & ~(m - 1));		// butterfly group starting offset
 		int j = (x & (mh - 1));		// butterfly index in group
 
@@ -49,7 +48,7 @@ void main()
 		vec2 input2 = pingpong[src][i + j];
 
 		src = 1 - src;
-		pingpong[src][x] = input2 + ComplexMul(W_N_k, input1);
+		pingpong[src][x] = input2 + mul(W_N_k, input1);
 
 		barrier();
 	}

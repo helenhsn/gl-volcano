@@ -16,7 +16,7 @@ void main(void)
 
 	ivec2 loc = ivec2(gl_GlobalInvocationID.xy);
 
-	// required due to interval change
+	// ifft 
 	float sign_correction = ((((loc.x + loc.y) & 1) == 1) ? -1.0 : 1.0) / float(N*N);
 
 	float h = sign_correction * imageLoad(height_field, loc).x;

@@ -43,7 +43,7 @@ void main()
 {
     vec4 grad = texture(gradients, IN.uv);
     
-    vec3 n=normalize(grad.xzy);// normalized normal vector
+    vec3 n=normalize(IN.normal);// normalized normal vector
 
     //vec3 n = vec3(0., 1., 0.);
     vec3 v = normalize(w_camera_position - IN.position); // view dir
