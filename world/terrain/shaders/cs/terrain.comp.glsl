@@ -15,7 +15,7 @@ float min_spread = 10*total_size;
 #define MIN_HEIGHT 30.0
 #define AMP_HEIGHT 50.0
 
-#define OCTAVES 8
+#define OCTAVES 9
 /************************ NOISE ***************/
 
 

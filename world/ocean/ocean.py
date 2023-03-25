@@ -8,7 +8,7 @@ import OpenGL.GL as GL
 class Ocean:
     def __init__(self, size, model_matrices):
         self.size = size
-        self.ocean_grid = OceanGrid(size, 256, 20.0)
+        self.ocean_grid = OceanGrid(size, 256, 30.0)
         self.fft = FFT()
         self.grid = Grid(Shader(vertex_source="world/ocean/shaders/ocean.vert", fragment_source="world/ocean/shaders/ocean.frag"), size)
         self.model_matrices = model_matrices
