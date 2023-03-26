@@ -10,10 +10,14 @@ uniform mat4 projection;
 uniform sampler2D displacement;
 uniform sampler2D gradients;
 uniform vec3 w_camera_position;
+uniform vec2 wind_dir;
+uniform float t;
 
 // removing tilling effect # TODO LN
 #define BLEND_START  8    // m
-#define BLEND_END    100  // m
+#define BLEND_END    7000  // m
+
+
 #define OCTAVES 6
 
 
@@ -64,10 +68,74 @@ vec3 blend_normal(in vec3 n, float clamp_factor) {
 }
 
 
+/********************** REMOVING TILING EFFECT *************/ 
+
+vec2 hash(vec2 v) {
+    return vec2
+    (
+        fract(sin(dot(v, vec2(763., 827.))+26.) * 9283.),
+        fract(sin(dot(v, vec2(135., 236.))+145.) * 422.)
+    );
+}
+
+float perlin(vec2 pos) {
+    vec2 cube_coords = vec2(floor(pos.x), floor(pos.y));
+    vec2 coords = pos - cube_coords;
+    return mix(
+        mix (
+            dot(hash(cube_coords), coords),
+            dot(hash(vec2(cube_coords.x + 1., cube_coords.y)), vec2(coords.x - 1., coords.y)),
+            smoothstep(0., 1., coords.x)
+        ),
+        mix (
+            dot(hash(vec2(cube_coords.x, cube_coords.y + 1.)), vec2(coords.x, coords.y - 1.)),
+            dot(hash(vec2(cube_coords.x + 1., cube_coords.y + 1.)), vec2(coords.x - 1., coords.y - 1.)),
+            smoothstep(0., 1., coords.x)
+        ),
+        smoothstep(0., 1., coords.y)
+    );
+}
+
+float get_perlin_blend(vec2 p, vec3 perlinFrequency, vec3 perlinAmplitude) {
+    float p0 = perlin(p * perlinFrequency.x + wind_dir*t*0.1);
+    float p1 = perlin(p * perlinFrequency.y + wind_dir*t*0.1);
+    float p2 = perlin(p * perlinFrequency.z + wind_dir*t*0.1);
+    return dot(vec3(p0, p1, p2), perlinAmplitude);
+}
+
+vec3 get_perlin_normal(vec2 p, vec3 perlinFrequency, vec3 perlinAmplitude) {
+    vec2 eps = vec2(0.01, 0.0);
+
+    // finite differences
+    vec3 n = vec3(
+        get_perlin_blend(p+eps.xy, perlinFrequency, perlinAmplitude) - get_perlin_blend(p - eps.xy, perlinFrequency, perlinAmplitude), 
+        2.0 * eps.x,
+        get_perlin_blend(p+eps.yx, perlinFrequency, perlinAmplitude) - get_perlin_blend(p - eps.yy, perlinFrequency, perlinAmplitude)
+        );
+    return n;
+}
+
+void tiling(inout vec3 d, inout vec3 n, vec3 p) {
+    vec3 v = w_camera_position - p;
+    float v_length = length(v);
+    float factor = clamp((BLEND_END - v_length)/(BLEND_END - BLEND_START), 0., 1.);
+    float perl = 0.0;
+    vec3 perlin_n = vec3(0.);
+    if (factor < 1.) {
+        perl = get_perlin_blend(p.xz, vec3(0.001, 0.004, 0.002), vec3(105.65, 110.90, 100.77));
+        perlin_n = get_perlin_normal(p.xz, vec3(0.001, 0.004, 0.02), vec3(105.65, 110.90, 100.77));
+    }
+    d = mix(vec3(perl), d, factor*factor);
+    n.xz = mix(perlin_n.xz, n.xz, factor*factor);
+
+}
+
+
 out VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
+    vec3 col;
 } OUTPUT;
 
 void main() {
@@ -77,14 +145,21 @@ void main() {
     vec3 grad = texture(gradients, Uv).xzy;
 
     OUTPUT.uv = uv;
+
+    // removing tiling effect
+    tiling(d, grad, (model*vec4(position, 1.)).xyz);
     vec3 new_pos = position + d;
+
     vec3 world_pos = (model * vec4(new_pos, 1.)).xyz;
 
+    // flattening ocean under the island
     float noise_cliff = fbm(world_pos.xz, 1000.0, .55, 0.002, 2.0)*0.5 + 0.5; // gives a rusty appearance to our island
-    float clamp_factor = smoothstep(-2300-700, -2300, length(world_pos.xz)+noise_cliff) -1 + smoothstep(2300+700, 2300, length(world_pos.xz)+noise_cliff);
-
+    float clamp_factor = smoothstep(-2100-700, -2100, length(world_pos.xz)+noise_cliff) -1 + smoothstep(2100+700, 2100, length(world_pos.xz)+noise_cliff);
     clamp_factor *= clamp_factor;
+
     OUTPUT.position = blend_height(world_pos, clamp_factor);
+    OUTPUT.col = d;
     OUTPUT.normal = blend_normal(grad, clamp_factor);
+
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
 }

@@ -12,7 +12,7 @@ class Camera:
         self.speed = vec(0.0, 0.0, 0.0)
         self.speed = 300.0
         self.sensitivity = 0.1
-        self.pitch = -45.0
+        self.pitch = -30.0
         self.yaw = 90.0
         self.update_vectors()
 
@@ -40,7 +40,7 @@ class Camera:
         return rotation @ translate(-self.camera_pos)
 
     def projection_matrix(self, winsize):
-        return perspective(45, winsize[0] / winsize[1], 0.1, 10000.0)
+        return perspective(45, winsize[0] / winsize[1], 0.1, 8000.0)
 
     def handle_keys(self, key, action, delta_time):
 

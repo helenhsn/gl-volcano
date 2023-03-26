@@ -4,22 +4,29 @@ in VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
+    vec3 col;
 } IN;
 
 #define PI 3.14159265359
-
+#define BLEND_START  8    // m
+#define BLEND_END    2000  // m
 // simulation related uniforms
 uniform sampler2D gradients;
 uniform vec3 w_camera_position;
 
-const vec3 light_pos = vec3(-10000.0, 10000.0, -10000.0);
-const vec3 ambient_light = vec3(0.7255, 0.9216, 0.9804);
+const vec3 light_pos = vec3(-5000.0, 5000.0, -5000.0);
+const vec3 ambient_light = vec3(0.2196, 0.5922, 0.7059);
 const vec3 light_col=vec3(1.);
-const vec3 deep_blue=vec3(0.0157, 0.2049, 0.4384);
-const vec3 light_blue = vec3(0.0549, 0.5412, 0.8667);
+const vec3 deep_blue=vec3(0.0196, 0.0745, 0.1412);
+const vec3 light_blue = vec3(0.0, 0.1059, 0.2549);
+
+uniform vec2 wind_dir;
+uniform float t;
 // output fragment color for OpenGL
 out vec4 out_color;
 
+const vec3 perlinFrequency = vec3(0.001, 0.005, 0.002);
+const vec3 perlinAmplitude = vec3(2.65, 2.90, 2.77);
 
 // ----------------------------------------------------------------------------
 float fresnel(vec3 l, vec3 n){
@@ -37,28 +44,78 @@ vec3 get_normal(vec3 slope){
     return normalize(n);
 }
 
+vec2 hash(vec2 v) {
+    return vec2
+    (
+        fract(sin(dot(v, vec2(763., 827.))+26.) * 9283.),
+        fract(sin(dot(v, vec2(135., 236.))+145.) * 422.)
+    );
+}
+
+float perlin(vec2 pos) {
+    vec2 cube_coords = vec2(floor(pos.x), floor(pos.y));
+    vec2 coords = pos - cube_coords;
+    return mix(
+        mix (
+            dot(hash(cube_coords), coords),
+            dot(hash(vec2(cube_coords.x + 1., cube_coords.y)), vec2(coords.x - 1., coords.y)),
+            smoothstep(0., 1., coords.x)
+        ),
+        mix (
+            dot(hash(vec2(cube_coords.x, cube_coords.y + 1.)), vec2(coords.x, coords.y - 1.)),
+            dot(hash(vec2(cube_coords.x + 1., cube_coords.y + 1.)), vec2(coords.x - 1., coords.y - 1.)),
+            smoothstep(0., 1., coords.x)
+        ),
+        smoothstep(0., 1., coords.y)
+    );
+}
+
+/***** REMOVING TILLING EFFECT ****/
+float blending_grad_color(in vec3 v, inout vec3 n, inout vec3 col) {
+    float v_length = length(v);
+    float factor = clamp((BLEND_END - v_length)/(BLEND_END - BLEND_START), 0., 1.);
+    float perl = 0.0;
+    if (factor < 1.) {
+        float p0 = perlin(IN.position.xz * perlinFrequency.x + wind_dir*t*0.1);
+        float p1 = perlin(IN.position.xz * perlinFrequency.y + wind_dir*t*0.1);
+        float p2 = perlin(IN.position.xz * perlinFrequency.z + wind_dir*t*0.1);
+        perl = dot(vec3(p0, p1, p2), perlinAmplitude);
+    }
+    n.xz = mix(vec2(perl, perl), n.xz, factor*factor);
+    return factor;
+}
+
+
 
 // ----------------------------------------------------------------------------
 void main()
 {
     vec4 grad = texture(gradients, IN.uv);
-    
-    vec3 n=normalize(IN.normal);// normalized normal vector
+    float range = 25.0;
+    vec3 water_color = mix(deep_blue, light_blue, smoothstep(-range, range, IN.position.y));
 
-    //vec3 n = vec3(0., 1., 0.);
-    vec3 v = normalize(w_camera_position - IN.position); // view dir
+    vec3 n = IN.normal;
+    vec3 temp_v = w_camera_position - IN.position;
+    // tiling effect removal
+    //float f = blending_grad_color(temp_v, n, water_color);
+    n=normalize(n);// normalized normal vector
+
+    vec3 v = normalize(temp_v); // view dir
     vec3 l = normalize(light_pos - IN.position); // light dir
     vec3 h=normalize(l+v);
-    
+
+
+
+    // lighting
     float F=fresnel(n, v);
 
     
     vec3 ambient= ambient_light;
     vec3 diffuse = max(dot(l, n), 0.) * light_col;
-    vec3 fresnel = F * light_col;
+    vec3 fresnel = F * ambient_light;
 
     // light from the sun (Ward anisotropic model)
-    const float rho_s   = 0.3;
+    const float rho_s   = 0.5;
     const float ax    = 0.25;
     const float ay    = 0.1;
 
@@ -73,18 +130,21 @@ void main()
     float specular =  factor * exp(-2.0 * ((hdotx * hdotx) + (hdoty * hdoty)) / (1+hdotn * hdotn));;
     vec3 spec = specular * light_col;
 
-
-    float range = 25.0;
-    vec3 water_color = mix(deep_blue, light_blue, smoothstep(-range, range, IN.position.y));
     //water_color = mix(water_color, vec3(1.0, 1.0, 1.0), smoothstep(0.8, 1.0, foam)*smoothstep(0.6, 0.3, grad.w));
 
-    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.1+ spec*0.1;
+    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.1+ spec*0.01;
 
+    float turbulence = max(1.8 - grad.w, 0.0);
+	float color_mod = smoothstep(0.2, 12.95, turbulence);
+
+	//color_mod = mix(1.0, color_mod, f);
 
     // float noise = perlin(vec3(IN.UV*300., 0.))*.28+.72;
     // float tweak = smoothstep(1.05, 1.09, J*noise);
     
-    out_color=vec4(color, 1.);
+
+    
+    out_color=vec4(pow(color, vec3(1/2.2)), 1.);
 
 
     

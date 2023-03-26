@@ -7,7 +7,7 @@ class Chunk:
     def __init__(self, size, scale_factor):
         self.model_matrices = dict()
         translation_factor = (size-1)*scale_factor
-        N = 4 
+        N = 4
         for i in range (-N, N):
             for j in range(-N, N):
                 self.model_matrices[(i,j)]= translate((i*translation_factor, 0.0, j*translation_factor))

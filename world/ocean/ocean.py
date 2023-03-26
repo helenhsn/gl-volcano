@@ -8,12 +8,14 @@ import OpenGL.GL as GL
 class Ocean:
     def __init__(self, size, model_matrices):
         self.size = size
-        self.ocean_grid = OceanGrid(size, 256, 30.0)
+        self.ocean_grid = OceanGrid(size, 256, 40.0)
         self.fft = FFT()
         self.grid = Grid(Shader(vertex_source="world/ocean/shaders/ocean.vert", fragment_source="world/ocean/shaders/ocean.frag"), size)
         self.model_matrices = model_matrices
+        self.t = 0.0
 
     def update(self, t):
+        self.t = t
         self.fft.update(t, self.ocean_grid)
 
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
@@ -28,4 +30,4 @@ class Ocean:
         self.grid.shader.set_int("displacement", 0)
         self.grid.shader.set_int("gradients", 1)
         for tup in self.model_matrices.keys():
-            self.grid.draw(primitives=primitives, wind_speed=self.ocean_grid.wind_speed, wind_direction=self.ocean_grid.wind_direction, model=self.model_matrices[tup],**uniforms)
+            self.grid.draw(primitives=primitives, wind_speed=self.ocean_grid.wind_speed, t = self.t, wind_dir=self.ocean_grid.wind_direction, model=self.model_matrices[tup],**uniforms)
