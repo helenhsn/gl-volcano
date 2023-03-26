@@ -130,6 +130,11 @@ void tiling(inout vec3 d, inout vec3 n, vec3 p) {
 
 }
 
+vec3 get_normal(vec3 slope){
+    vec3 up = vec3(0., 1., 0.);
+    vec3 n = (up - slope);
+    return slope;
+}
 
 out VS_OUTPUT {
     vec3 position;
@@ -145,9 +150,9 @@ void main() {
     vec3 grad = texture(gradients, Uv).xzy;
 
     OUTPUT.uv = uv;
-
+    vec3 n = get_normal(grad);
     // removing tiling effect
-    tiling(d, grad, (model*vec4(position, 1.)).xyz);
+    tiling(d, n, (model*vec4(position, 1.)).xyz);
     vec3 new_pos = position + d;
 
     vec3 world_pos = (model * vec4(new_pos, 1.)).xyz;
@@ -159,7 +164,7 @@ void main() {
 
     OUTPUT.position = blend_height(world_pos, clamp_factor);
     OUTPUT.col = d;
-    OUTPUT.normal = blend_normal(grad, clamp_factor);
+    OUTPUT.normal = blend_normal(n, clamp_factor);
 
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
 }
