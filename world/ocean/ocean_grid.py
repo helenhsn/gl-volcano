@@ -12,13 +12,13 @@ SIZE = (256+1)*(256+1)
 TWO_PI = 2*pi
 
 class OceanGrid:
-    def __init__(self, L, N, A):
+    def __init__(self, L, N):
         self.L = L
         self.N = N
         self.log2_N = log2(N)
-        self.A = A
+        self.A = 60
         self.wind_direction = vec(1.0, 1.0)
-        self.wind_speed = 60.0
+        self.wind_speed = 80.0
         self.h0_text = self.init_h0k_text()
         self.displacement_text = Texture((N, N), GL.GL_CLAMP_TO_EDGE, GL.GL_CLAMP_TO_EDGE, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RGBA32F, GL.GL_RGBA, is_vec=False)
         self.gradients_text = Texture((N, N), GL.GL_CLAMP_TO_EDGE, GL.GL_CLAMP_TO_EDGE, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RGBA32F, GL.GL_RGBA, is_vec=False)

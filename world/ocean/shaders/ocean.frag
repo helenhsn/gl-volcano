@@ -8,8 +8,7 @@ in VS_OUTPUT {
 } IN;
 
 #define PI 3.14159265359
-#define BLEND_START  8    // m
-#define BLEND_END    2000  // m
+
 // simulation related uniforms
 uniform sampler2D gradients;
 uniform vec3 w_camera_position;
@@ -49,7 +48,7 @@ vec3 get_normal(vec3 slope){
 void main()
 {
     vec4 grad = texture(gradients, IN.uv);
-    float range = 25.0;
+    float range = 5.0;
     vec3 water_color = mix(deep_blue, light_blue, smoothstep(-range, range, IN.position.y));
 
     vec3 n = normalize(IN.normal);
@@ -72,7 +71,7 @@ void main()
 
     // light from the sun (Ward anisotropic model)
     const float rho_s   = 0.3;
-    const float ax    = 0.25;
+    const float ax    = 0.15;
     const float ay    = 0.1;
 
     // anisotropic directions
@@ -83,12 +82,14 @@ void main()
     float hdotx = dot(h, x) / ax;
     float hdoty = dot(h, y) / ay;
     float hdotn = dot(h, n);
-    float specular =  factor * exp(-2.0 * ((hdotx * hdotx) + (hdoty * hdoty)) / (1+hdotn * hdotn));;
+    float specular =  factor * exp(-2.0 * ((hdotx * hdotx) + (hdoty * hdoty)) / (1+hdotn * hdotn));
     vec3 spec = specular * light_col;
 
     //water_color = mix(water_color, vec3(1.0, 1.0, 1.0), smoothstep(0.8, 1.0, foam)*smoothstep(0.6, 0.3, grad.w));
-
-    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.1+ spec*0.06;
+        
+    if (specular > 10.)
+        spec *= 0.02;
+    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.2+ spec*0.3;
 
     float turbulence = max(1.8 - grad.w, 0.0);
 	float color_mod = smoothstep(0.2, 12.95, turbulence);

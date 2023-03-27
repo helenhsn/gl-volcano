@@ -15,7 +15,7 @@ uniform float t;
 
 // removing tilling effect # TODO LN
 #define BLEND_START  8    // m
-#define BLEND_END    7000  // m
+#define BLEND_END    10000  // m
 
 
 #define OCTAVES 6
@@ -132,7 +132,7 @@ void tiling(inout vec3 d, inout vec3 n, vec3 p) {
 
 vec3 get_normal(vec3 slope){
     vec3 up = vec3(0., 1., 0.);
-    vec3 n = (up - slope);
+    vec3 n = (up - slope)/sqrt(1+slope*slope);
     return slope;
 }
 
@@ -150,7 +150,7 @@ void main() {
     vec3 grad = texture(gradients, Uv).xzy;
 
     OUTPUT.uv = uv;
-    vec3 n = get_normal(grad);
+    vec3 n = grad;
     // removing tiling effect
     tiling(d, n, (model*vec4(position, 1.)).xyz);
     vec3 new_pos = position + d;
