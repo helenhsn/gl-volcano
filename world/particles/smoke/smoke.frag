@@ -20,8 +20,8 @@ void main() {
     float f = floor(8.0*IN.lifetime)/8.0;
     vec2 offset = vec2(f, 0.875 - f); // when lifetime = 0.0 we're at the bottom right of sprites text
     out_color = texture2D(sprites, uv_scaled + offset);
-    out_color.rgb = mix(vec3(0.0667, 0.0667, 0.0667), out_color.rgb * vec3(0.7529, 0.0275, 0.0275), IN.lifetime);
-    //out_color.rgb *= vec3(0.0);
-    out_color.a *=0.2;
+    out_color.rgb = mix(out_color.rgb * vec3(1.0, 0.149, 0.0), vec3(1.0, 0.851, 0.0), clamp(IN.lifetime, 0.0, 0.8));
+    out_color.rgb = mix(vec3(0.0, 0.0, 0.0), out_color.rgb, clamp(IN.lifetime, 0.2, 1.0));
+    out_color.a *=0.18;
 
 }
