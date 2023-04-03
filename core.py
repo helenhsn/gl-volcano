@@ -19,6 +19,8 @@ from world.block import Chunk
 import os
 import OpenGL.GL as GL
 
+from world.particles.smoke.smoke_ps import ParticleSystem
+
 # ------------  Node is the core drawable for hierarchical scene graphs -------
 class Node:
     """ Scene graph transform and parameter broadcast node """
@@ -247,14 +249,17 @@ class Viewer(Node):
 
         # terrain/ocean mesh related attributes
         self.chunk_size = size
-        self.chunk = Chunk(size, 4)        
+        self.chunk = Chunk(size, 4)
+
+        # particle system init
+        self.ps = ParticleSystem()        
 
 
     def run(self):
         """ Main render loop for this OpenGL window """
         while not glfw.window_should_close(self.win):
 
-            GL.glClearColor(0.1, 0.9, 0.9, 0.1)
+            GL.glClearColor(0.1, 0.1, 0.2, 0.1)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             win_size = glfw.get_window_size(self.win)
@@ -271,8 +276,8 @@ class Viewer(Node):
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
+            self.ps.draw(dt=self.delta_time, camera=self.camera)    
                 
-                    
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)

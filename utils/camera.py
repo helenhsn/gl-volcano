@@ -3,7 +3,7 @@ from utils.transform import *
 from math import cos, sin, pi
 class Camera:
     def __init__(self):
-        self.camera_pos = vec(0.0, 1000.0, 3000.0)
+        self.camera_pos = vec(0.0, 1000.0, 500.0)
         self.world_up = vec(0.0, 1.0, 0.0)
         self.up = vec(0.0, 1.0, 0.0)
         self.rgt = vec(0.0, 0.0, 0.0)
@@ -12,9 +12,13 @@ class Camera:
         self.speed = vec(0.0, 0.0, 0.0)
         self.speed = 300.0
         self.sensitivity = 0.1
-        self.pitch = -30.0
+        self.pitch = -10.0
         self.yaw = 90.0
         self.update_vectors()
+
+        self.view = None
+        self.proj = None
+
 
     
     def update_vectors(self):
@@ -37,10 +41,12 @@ class Camera:
 
         rotation = np.identity(4)
         rotation[:3, :3] = np.vstack([self.rgt, self.up, -self.fwd])
-        return rotation @ translate(-self.camera_pos)
+        self.view = rotation @ translate(-self.camera_pos)
+        return self.view
 
     def projection_matrix(self, winsize):
-        return perspective(45, winsize[0] / winsize[1], 0.1, 8000.0)
+        self.proj = perspective(45, winsize[0] / winsize[1], 0.1, 8000.0)
+        return self.proj
 
     def handle_keys(self, key, action, delta_time):
 

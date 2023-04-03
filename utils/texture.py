@@ -19,7 +19,7 @@ class Texture:
     def __del__(self):  # delete GL texture from GPU when object dies
         GL.glDeleteTextures(self.glid)
 
-    def __init__(self, dimensions, wrap_s, wrap_t, mag_filter, min_filter, internal_format, format, data=None, is_vec=False, path_img=None):
+    def __init__(self, dimensions = (0.0, 0.0), wrap_s=GL.GL_REPEAT, wrap_t=GL.GL_REPEAT, mag_filter=GL.GL_NEAREST, min_filter=GL.GL_NEAREST, internal_format=GL.GL_RGBA32F, format=GL.GL_RGBA, data=None, is_vec=False, path_img=None):
         self.glid = GL.glGenTextures(1)
         self.type = GL.GL_TEXTURE_2D
         self.dimensions = (int(dimensions[0]), int(dimensions[1])) # dimensions = width, height

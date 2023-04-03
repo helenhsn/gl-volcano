@@ -10,7 +10,6 @@ class Shader:
         src = src.decode('ascii') if isinstance(src, bytes) else src
         GL.glGetError()
         shader = GL.glCreateShader(shader_type)
-        print(shader)
         err = GL.glGetError()
         if err != GL.GL_NO_ERROR:
             print("eeeeeeeee" ,err)
@@ -26,7 +25,7 @@ class Shader:
             os._exit(1)
         return shader
 
-    def __init__(self, vertex_source=None, fragment_source=None, compute_source=None, debug=False):
+    def __init__(self, vertex_source=None, fragment_source=None, geom_source=None, compute_source=None, debug=False):
         """ Shader can be initialized with raw strings or source file names """
         
         if (compute_source):
@@ -36,6 +35,23 @@ class Shader:
                 GL.glAttachShader(self.glid, comp)
                 GL.glLinkProgram(self.glid)
                 GL.glDeleteShader(comp)
+                status = GL.glGetProgramiv(self.glid, GL.GL_LINK_STATUS)
+                if not status:
+                    print(GL.glGetProgramInfoLog(self.glid).decode('ascii'))
+                    os._exit(1)
+        elif (geom_source):
+            vert = self._compile_shader(vertex_source, GL.GL_VERTEX_SHADER)
+            geom = self._compile_shader(geom_source, GL.GL_GEOMETRY_SHADER)
+            frag = self._compile_shader(fragment_source, GL.GL_FRAGMENT_SHADER)
+            if vert and frag and geom:
+                self.glid = GL.glCreateProgram()  # pylint: disable=E1111
+                GL.glAttachShader(self.glid, vert)
+                GL.glAttachShader(self.glid, geom)
+                GL.glAttachShader(self.glid, frag)
+                GL.glLinkProgram(self.glid)
+                GL.glDeleteShader(vert)
+                GL.glDeleteShader(geom)
+                GL.glDeleteShader(frag)
                 status = GL.glGetProgramiv(self.glid, GL.GL_LINK_STATUS)
                 if not status:
                     print(GL.glGetProgramInfoLog(self.glid).decode('ascii'))

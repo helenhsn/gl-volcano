@@ -18,10 +18,10 @@ vec3 albedo_from_height(float height)
 
     vec3 colors[4];
 
-    colors[0] = vec3(0.0, 0.0, 0.0);
-    colors[1] = vec3(0.0471, 0.3725, 0.0);
-    colors[2] = vec3(0.0, 0.0, 0.0);
-    colors[3] = vec3(0.0314, 0.0, 0.0);
+    colors[0] = vec3(0.1059, 0.1059, 0.1059);
+    colors[1] = vec3(0.1098, 0.2667, 0.1765);
+    colors[2] = vec3(0.0863, 0.0863, 0.0863);
+    colors[3] = vec3(0.0549, 0.0196, 0.0196);
     if(height < 0.0)
         return vec3(0.7333, 0.0549, 0.451);
     else
@@ -30,8 +30,8 @@ vec3 albedo_from_height(float height)
         vec3 base_color = vec3(0., 0., 1.);
         if (hscaled < 0.13)
             return mix(colors[0], colors[1], hscaled/0.13);
-        if ( 0.13 < hscaled  && hscaled < 0.15)
-            return mix(colors[1], colors[2], (hscaled - 0.13)/(0.15 - 0.13));
+        if ( 0.13 < hscaled  && hscaled < 0.20)
+            return mix(colors[1], colors[2], (hscaled - 0.13)/(0.20 - 0.13));
         else
             return mix(colors[2], colors[3], (hscaled-0.15)/(1. - 0.15));
         return base_color;
@@ -59,10 +59,10 @@ void main() {
     vec3 diffuse = dif * light_col;
 
     // specular light
-    float spec = pow(max(dot(n, h), 0.0), 16);
+    float spec = pow(max(dot(n, h), 0.0), 32);
     vec3 specular = spec * light_col;
 
-    out_color.rgb = specular*0.8 + (ambient*0.5 + diffuse) * albedo;
+    out_color.rgb = specular*0.4 + (ambient*0.5 + diffuse) * albedo;
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }
     

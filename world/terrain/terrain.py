@@ -12,11 +12,12 @@ class Terrain:
         self.scale_factor = scale_factor
         self.maps = dict()
         self.model_matrices = model_matrices
-        N = 4 
+        N = 4
+        cs = Shader(compute_source="world/terrain/shaders/cs/terrain.comp.glsl")
         for i in range (-N, N):
             for j in range(-N, N):
                 current_model = model_matrices[(i,j)]
-                self.maps[(i, j)] = self.get_map(current_model)
+                self.maps[(i, j)] = self.get_map(current_model, cs)
 
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
         for tup, map in self.maps.items():
@@ -27,8 +28,7 @@ class Terrain:
             self.grid.draw(primitives=primitives, model=self.model_matrices[tup], **uniforms)
 
 
-    def get_map(self, model):
-        cs = Shader(compute_source="world/terrain/shaders/cs/terrain.comp.glsl")
+    def get_map(self, model, cs):
         map_text = Texture((self.size,self.size), GL.GL_CLAMP_TO_EDGE, GL.GL_CLAMP_TO_EDGE, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RGBA32F, GL.GL_RGBA, is_vec=False)
         cs.bind()
         cs.set_image2d_write("map", map_text)

@@ -8,7 +8,8 @@ in VS_OUTPUT {
 } IN;
 
 #define PI 3.14159265359
-
+#define BLEND_START  8    // m
+#define BLEND_END    10000  // m
 // simulation related uniforms
 uniform sampler2D gradients;
 uniform vec3 w_camera_position;
@@ -17,7 +18,7 @@ const vec3 light_pos = vec3(-5000.0, 5000.0, -5000.0);
 const vec3 ambient_light = vec3(0.2196, 0.5922, 0.7059);
 const vec3 light_col=vec3(1.);
 const vec3 deep_blue=vec3(0.0196, 0.0745, 0.1412);
-const vec3 light_blue = vec3(0.0, 0.1059, 0.2549);
+const vec3 light_blue = vec3(0.0, 0.1686, 0.4078);
 
 uniform vec2 wind_dir;
 uniform float t;
@@ -70,7 +71,7 @@ void main()
     vec3 fresnel = F * ambient_light;
 
     // light from the sun (Ward anisotropic model)
-    const float rho_s   = 0.3;
+    const float rho_s   = 0.2;
     const float ax    = 0.15;
     const float ay    = 0.1;
 
@@ -89,12 +90,12 @@ void main()
         
     if (specular > 10.)
         spec *= 0.02;
-    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.2+ spec*0.3;
-
     float turbulence = max(1.8 - grad.w, 0.0);
 	float color_mod = smoothstep(0.2, 12.95, turbulence);
 
-	//color_mod = mix(1.0, color_mod, f);
+    float f = clamp((BLEND_END - length(temp_v))/(BLEND_END - BLEND_START), 0., 1.);
+	water_color = mix(water_color, vec3(color_mod), smoothstep(-20., 10., f));
+    vec3 color = (ambient*0.3 + diffuse*0.5)*water_color + fresnel*0.2+ spec*0.3;
 
     // float noise = perlin(vec3(IN.UV*300., 0.))*.28+.72;
     // float tweak = smoothstep(1.05, 1.09, J*noise);

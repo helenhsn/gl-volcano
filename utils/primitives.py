@@ -9,7 +9,7 @@ import sys                          # for system arguments
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import numpy as np                  # all matrix manipulations & OpenGL args
 import glfw
-
+import ctypes
 
 class VertexArray:
     """ helper class to create and self destroy OpenGL vertex array objects."""
@@ -17,6 +17,7 @@ class VertexArray:
         """ Vertex array from attributes and optional index array. Vertex
             Attributes should be list of arrays with one row per vertex. """
 
+        self.shader = shader
         # create vertex array object, bind it
         self.glid = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self.glid)
@@ -30,7 +31,11 @@ class VertexArray:
                 # bind a new vbo, upload its data to GPU, declare size and type
                 self.buffers[name] = GL.glGenBuffers(1)
                 data = np.array(data, np.float32, copy=False)  # ensure format
-                nb_primitives, size = data.shape
+                try:
+                    nb_primitives, size = (data.shape[0], data.shape[1])
+                except IndexError:
+                    nb_primitives=data.shape[0]
+                    size = 1 
                 GL.glEnableVertexAttribArray(loc)
                 GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.buffers[name])
                 GL.glBufferData(GL.GL_ARRAY_BUFFER, data, usage)
@@ -40,7 +45,6 @@ class VertexArray:
         self.draw_command = GL.glDrawArrays
         self.arguments = (0, nb_primitives)
         if index is not None:
-            print("oui")
             self.buffers['index'] = GL.glGenBuffers(1)
             index_buffer = np.array(index, np.int32, copy=False)  # good format
             GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.buffers['index'])
@@ -50,7 +54,6 @@ class VertexArray:
 
     def execute(self, primitive, attributes=None):
         """ draw a vertex array, either as direct array or indexed array """
-
         # optionally update the data attribute VBOs, useful for e.g. particles
         attributes = attributes or {}
         for name, data in attributes.items():
@@ -144,4 +147,4 @@ class Grid(Mesh):
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
         
         super().draw(primitives=primitives, size=self.size, **uniforms)
-    
+        

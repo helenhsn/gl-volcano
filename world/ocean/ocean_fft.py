@@ -10,9 +10,9 @@ class Step(Enum):
 # set of textures used to run the algorithm of FFT on gpu
 class TexturesFFT:
     def __init__(self, N):
-        self.tilde_hkt = Texture((N, N), GL.GL_REPEAT, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RG32F, GL.GL_RGBA32F, is_vec=False)
-        self.dt_dxdz = Texture((N, N), GL.GL_REPEAT, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RG32F, GL.GL_RGBA32F, is_vec=False)
-        self.temp_text = Texture((N, N), GL.GL_REPEAT, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RG32F, GL.GL_RGBA32F, is_vec=False)
+        self.tilde_hkt = Texture((N, N), GL.GL_REPEAT, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RG32F, GL.GL_RG, is_vec=False)
+        self.dt_dxdz = Texture((N, N), GL.GL_REPEAT, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RG32F, GL.GL_RG, is_vec=False)
+        self.temp_text = Texture((N, N), GL.GL_REPEAT, GL.GL_REPEAT, GL.GL_LINEAR, GL.GL_LINEAR, GL.GL_RG32F, GL.GL_RG, is_vec=False)
 
 
 class FFT:

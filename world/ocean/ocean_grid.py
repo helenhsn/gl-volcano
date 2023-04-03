@@ -50,7 +50,6 @@ class OceanGrid:
             k[1] = TWO_PI * (half - m) / self.L
             for n in range(0, N_plus_1):
                 k[0] = TWO_PI * (half - n) / self.L
-                index = m*(self.N+1)+n
                 sqrt_P_h = 0.0
                 if k[0] != 0.0 or k[1] != 0.0:
                     sqrt_P_h = sqrt(self.phillips_spectrum(k=k, win_dir_n=win_dir_n))
