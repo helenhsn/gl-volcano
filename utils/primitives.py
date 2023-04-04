@@ -57,8 +57,9 @@ class VertexArray:
         # optionally update the data attribute VBOs, useful for e.g. particles
         attributes = attributes or {}
         for name, data in attributes.items():
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.buffers[name])
-            GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, data)
+            if name in self.buffers:
+                GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.buffers[name])
+                GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, data)
 
         GL.glBindVertexArray(self.glid)
         self.draw_command(primitive, *self.arguments)
@@ -113,7 +114,7 @@ class Triangle(Mesh):
 
 class Cylinder(Mesh):
     """ Class for drawing a cylinder object """
-    def __init__(self, shader, number_facets):
+    def __init__(self, shader, number_facets, radius_facet_up, radius_facet_down):
         self.shader = shader
         #angles
         theta_init = 0.0
@@ -132,10 +133,10 @@ class Cylinder(Mesh):
         while(theta < theta_max):
             #on découpe le cylindre en rectangles qu'on découpe eux-mêmes en triangles
             #on fait 4 points
-            A = (np.cos(theta), h_base1, np.sin(theta))
-            C = (np.cos(theta), h_base2, np.sin(theta))
-            B = (np.cos(theta + theta_incr), h_base1, np.sin(theta + theta_incr))
-            D = (np.cos(theta + theta_incr), h_base2, np.sin(theta + theta_incr))
+            A = (radius_facet_up*np.cos(theta), h_base1, radius_facet_up*np.sin(theta))
+            C = (radius_facet_down*np.cos(theta), h_base2, radius_facet_down*np.sin(theta))
+            B = (radius_facet_up*np.cos(theta + theta_incr), h_base1, radius_facet_up*np.sin(theta + theta_incr))
+            D = (radius_facet_down*np.cos(theta + theta_incr), h_base2, radius_facet_down*np.sin(theta + theta_incr))
             #on ajoute les 3 points chaque triangle pour dessiner nos rectanlges
             position.append(A)
             normal.append((np.cos(theta), 0, np.sin(theta)))
@@ -162,12 +163,16 @@ class Cylinder(Mesh):
         #création des deux faces du cylindre, une pour chaque hauteur
         for hauteur in (h_base1, h_base2):
             theta = theta_init
+            if hauteur == h_base1:
+                radius = radius_facet_up
+            else:
+                radius = radius_facet_down
             A = (0, hauteur, 0) #le point au centre du cercle - ça sera toujours le même donc on peut le créer dans le for directement
 
             while(theta < theta_max):
                 #on découpe en triangles le cercle
-                B = (np.cos(theta), hauteur, np.sin(theta))
-                C = (np.cos(theta+theta_incr), hauteur, np.sin(theta+theta_incr))
+                B = (radius*np.cos(theta), hauteur, radius*np.sin(theta))
+                C = (radius*np.cos(theta+theta_incr), hauteur, radius*np.sin(theta+theta_incr))
 
                 position.append(A)
                 position.append(B)
@@ -185,7 +190,7 @@ class Cylinder(Mesh):
 
         self.position = np.array((position), 'f')
         self.normal = np.array(normal, 'f')
-        self.color = self.normal
+        self.color = self.position
 
 
         self.index = np.array(index, np.uint32)
@@ -201,7 +206,7 @@ class Cylinder(Mesh):
         """
         #On peut refaire un dictionnaire pour modifier la couleur (on peut écraser que
         # l'un des deux attribut car les buffers sont différents !)
-        attributes = dict(color=self.color) #on a besoin que de color qu'on envoie dans draw
+        attributes = dict(color=self.normal) #on a besoin que de color qu'on envoie dans draw
         super().draw(primitives=primitives, attributes=attributes, **uniforms)
 
 

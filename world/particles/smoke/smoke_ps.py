@@ -11,10 +11,11 @@ class SmokeParticleSystem:
     def __init__(self):
 
         self.nb_particles = 32768
-
+        
+        sample_chisquared = np.random.noncentral_chisquare(df=1, nonc=0.00001, size=self.nb_particles)
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)
-        self.positions = [(0.0, 900.0, 0.0, np.random.noncentral_chisquare(df=1, nonc=0.00001, size=1)) for _ in range(self.nb_particles)]
-
+        self.positions = [(0.0, 900.0, 0.0, sample_chisquared[i]) for i in range(self.nb_particles)]
+        self.positions = np.asarray(self.positions, dtype=np.float32)
 
         
         R = 40.0
@@ -37,7 +38,7 @@ class SmokeParticleSystem:
         self.cs = Shader(compute_source="world/particles/smoke/update.comp.glsl")
 
         # binding the ssbos to the compute shader program && generating buffers
-        self.init_ssbos(shader_pgrm=self.cs.glid, attributes=dict(pos=np.array(self.positions, dtype=np.float32), vel=self.velocities, init_pos=np.array(self.init_pos, dtype=np.float32), init_vel=self.init_vel))
+        self.init_ssbos(shader_pgrm=self.cs.glid, attributes=dict(pos=self.positions, vel=self.velocities, init_pos=self.init_pos, init_vel=self.init_vel))
 
         # binding the ssbo containing the positions to the vertex shader
         ssbo_loc = GL.glGetProgramResourceIndex(self.shader.glid, GL.GL_SHADER_STORAGE_BLOCK, "pos")

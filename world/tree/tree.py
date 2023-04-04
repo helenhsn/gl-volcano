@@ -15,7 +15,7 @@ from utils.transform import translate, rotate, scale, sincos
 from utils.primitives import Cylinder
 from utils.shaders import Shader
 
-SEUIL = 0.25
+SEUIL = 0.5
 FACTOR = 0.9
 
 
@@ -23,21 +23,22 @@ def make_tree():
     from core import Node
 
     """ Creates the bottom of the tree with 3 sections """
-    d = 0.40
+    facteur = 2
+    d = 0.30 *facteur
     epaisseur = 0.6
-    a = 0.40*d*epaisseur
-    b = 1*d
-    c = 0.25*d*epaisseur
-    e = 0.35*d*epaisseur
+    a = 0.40*d*epaisseur*facteur
+    b = 1*d*facteur
+    c = 0.25*d*epaisseur*facteur
+    e = 0.40*d*epaisseur*facteur
 
     angle = 70
-    size = 0.7
-
+    size = 0.7*facteur
+    largeur_branche = 0.05*facteur
     no_axis = (0, 0, 0)
     no_angle = 0
     
     shader = Shader(vertex_source="world/tree/shaders/tree.vert", fragment_source="world/tree/shaders/tree.frag")
-    cylinder = Cylinder(shader, 100)
+    cylinder = Cylinder(shader, 10, 1, 0.5)
 
     #on crée 3 cylindres pour la base de l'arbre et on les met tous sur l'axe 0:
     base_shape = Node(transform=translate(0, b, 0) @ scale(a, b, a))
@@ -78,13 +79,13 @@ def make_tree():
     eigth_tree = Node(transform=rotate((0, 1, 0), 155))
 
     translation_upper.add(second_tree, third_tree, fourth_tree, fifth_tree, sixth_tree, seventh_tree, eigth_tree)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), second_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), third_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), fourth_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), fifth_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), sixth_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), seventh_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
-    tree_rec2(1, cylinder, translate(0, 4*b, 0), eigth_tree, rotate(no_axis, no_angle), 0, size, 0.05*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), second_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), third_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), fourth_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), fifth_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), sixth_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), seventh_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
+    tree_rec2(1, cylinder, translate(0, 4*b, 0), eigth_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
     
     
     return translation_base

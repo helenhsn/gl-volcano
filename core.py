@@ -258,11 +258,8 @@ class Viewer(Node):
         self.smoke_ps = SmokeParticleSystem()
 
         # trees
-        #self.add(make_tree())
-        self.trees = [make_tree(), make_tree(), make_tree()]
-        print(self.trees)
-        #liste = move_tree(self.trees, [(50,150,50), (80,80,80), (10,10,10)])
-        #self.add(make_tree())
+        self.trees = [make_tree()]
+        self.trees = move_tree(self.trees, [(900.0, 280.0, 900.0)])
 
     def run(self):
         """ Main render loop for this OpenGL window """
@@ -280,17 +277,14 @@ class Viewer(Node):
             self.chunk.update(current_frame)
             view_matrix = self.camera.view_matrix()
             projection_matrix = self.camera.projection_matrix(win_size)
-            # draw our scene objects
             
-            # self.chunk.draw(view=view_matrix,
-            #             projection=projection_matrix,
-            #             w_camera_position=self.camera.camera_pos)
-            self.ps.draw(dt=self.delta_time, camera=self.camera)    
-            self.trees[0].draw()
+            # draw our scene objects
+            self.trees[0].draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos)
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
-            
 
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendEquation(GL.GL_FUNC_ADD)

@@ -3,7 +3,7 @@ from utils.transform import *
 from math import cos, sin, pi
 class Camera:
     def __init__(self):
-        self.camera_pos = vec(0.0, 0.0, 0.0)
+        self.camera_pos = vec(900.0, 285.0, 920.0)
         self.world_up = vec(0.0, 1.0, 0.0)
         self.up = vec(0.0, 1.0, 0.0)
         self.rgt = vec(0.0, 0.0, 0.0)
