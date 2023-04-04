@@ -27,16 +27,22 @@ float random(in vec2 uv)
 }
 
 void main() {
-    // x(t) = v_x0*t + x0
-    // z(t) = v_z0*t + z0
-    // y(t) = -1/2 g t^2 + v_y0*t + y0
     
     uint loc = gl_GlobalInvocationID.x;
 
-    positions[loc].w -= 1.0; 
-    if (positions[loc].w > 0.0) {
+    if (positions[loc].w > 0.01) {
         positions[loc].xyz += velocities[loc].xyz * dt;
-        velocities[loc].xz *= 1.005;
+
+        if (positions[loc].w < 0.1 && positions[loc].y > 800.0) {
+            positions[loc].w *= 0.96;
+            velocities[loc].y *= 0.99; // decrease the speed by 1% each frame (we want smoke to be there much longer)
+         } else {
+            positions[loc].w *= 0.9;
+        }
+        if (positions[loc].w > 0.9)
+            velocities[loc].x *= velocities[loc].x < 0.0 ? 1.02 : 1.005 ; // decrease the speed by 1% each frame (we want smoke to be there much longer)
+            velocities[loc].z *= velocities[loc].z < 0.0 ? 1.02 : 1.005 ; // decrease the speed by 1% each frame (we want smoke to be there much longer)
+            
     } else {
         positions[loc] = positions_0[loc];
         velocities[loc].xyz = velocities_0[loc].xyz;

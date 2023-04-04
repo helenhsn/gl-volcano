@@ -20,7 +20,8 @@ from world.tree.tree import make_tree, move_tree
 import os
 import OpenGL.GL as GL
 
-from world.particles.smoke.smoke_ps import ParticleSystem
+from world.particles.smoke.smoke_ps import SmokeParticleSystem
+from world.particles.splashes.splash_ps import SplashParticleSystem
 
 # ------------  Node is the core drawable for hierarchical scene graphs -------
 class Node:
@@ -253,7 +254,8 @@ class Viewer(Node):
         self.chunk = Chunk(size, 4)
 
         # particle system init
-        self.ps = ParticleSystem()        
+        self.splash_ps = SplashParticleSystem()   
+        self.smoke_ps = SmokeParticleSystem()
 
         # trees
         #self.add(make_tree())
@@ -285,6 +287,19 @@ class Viewer(Node):
             #             w_camera_position=self.camera.camera_pos)
             self.ps.draw(dt=self.delta_time, camera=self.camera)    
             self.trees[0].draw()
+            self.chunk.draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos)
+            
+
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            GL.glBlendEquation(GL.GL_FUNC_ADD)
+            GL.glDepthMask(GL.GL_FALSE)
+            self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+            self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
+            GL.glDepthMask(GL.GL_TRUE)
+            GL.glDisable(GL.GL_BLEND)  
+                
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
