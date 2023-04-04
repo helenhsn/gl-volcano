@@ -12,6 +12,7 @@ from core import Viewer, Node
 
 from utils.transform import *
 from utils.animation import *
+from world.tree.tree import make_tree
 
 
 # -------------- rotation ----------------------------------------------------
@@ -33,6 +34,7 @@ def main():
     """ create a window, add scene objects, then run rendering loop """
     CHUNK_SIZE = 256 #nb of vertices per chunk side
     viewer = Viewer(size=CHUNK_SIZE)
+    viewer.add(make_tree())
 
     # start rendering loop
     viewer.run()

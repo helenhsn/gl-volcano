@@ -15,6 +15,7 @@ from utils.primitives import Mesh                     # 3D resource loader
 from utils.transform import Trackball, identity, vec, translate
 from utils.camera import Camera
 from world.block import Chunk
+from world.tree.tree import make_tree, move_tree
 
 import os
 import OpenGL.GL as GL
@@ -254,6 +255,12 @@ class Viewer(Node):
         # particle system init
         self.ps = ParticleSystem()        
 
+        # trees
+        #self.add(make_tree())
+        self.trees = [make_tree(), make_tree(), make_tree()]
+        print(self.trees)
+        #liste = move_tree(self.trees, [(50,150,50), (80,80,80), (10,10,10)])
+        #self.add(make_tree())
 
     def run(self):
         """ Main render loop for this OpenGL window """
@@ -273,11 +280,11 @@ class Viewer(Node):
             projection_matrix = self.camera.projection_matrix(win_size)
             # draw our scene objects
             
-            self.chunk.draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos)
+            # self.chunk.draw(view=view_matrix,
+            #             projection=projection_matrix,
+            #             w_camera_position=self.camera.camera_pos)
             self.ps.draw(dt=self.delta_time, camera=self.camera)    
-                
+            self.trees[0].draw()
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
