@@ -1,4 +1,4 @@
-
+import ctypes
 from random import random, uniform
 from struct import pack
 import OpenGL.GL as GL
@@ -7,25 +7,24 @@ from utils.shaders import Shader
 from utils.texture import Texture
 from math import pi, sin, cos
 
-class SmokeParticleSystem:
+class SplashParticleSystem:
     def __init__(self):
 
-        self.nb_particles = 32768
+        self.nb_particles = 512
 
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)
-        self.positions = [(0.0, 900.0, 0.0, np.random.noncentral_chisquare(df=1, nonc=0.00001, size=1)) for _ in range(self.nb_particles)]
-
+        self.positions = [(uniform(-10.0, 10.0), 900.0, uniform(-10.0, 10.0), uniform(25.0, 50.0)) for _ in range(self.nb_particles)]
 
         
-        R = 40.0
+        R = 20.0
 
         for i in range(self.nb_particles):
             phi = uniform(-pi/12.0, pi/4.0)
             theta = uniform(pi/4.0, pi)
 
-            speed_slope_x = R * sin(phi) * cos(theta) * uniform(0.2, 6.0)
-            speed_slope_y = R * cos(phi) * uniform(1.0, 5.0)
-            speed_slope_z = R * sin(phi) * sin(theta) * uniform(0.2, 6.0)
+            speed_slope_x = R * sin(phi) * cos(theta) * uniform(2.0, 10.0)
+            speed_slope_y = R * cos(phi) * uniform(1.0, 8.0)
+            speed_slope_z = R * sin(phi) * sin(theta) * uniform(2.0, 10.0)
             self.velocities[i] = (speed_slope_x, speed_slope_y, speed_slope_z, 0.0) # zero padding for the ssbo
 
         self.init_pos = self.positions.copy()
@@ -33,25 +32,24 @@ class SmokeParticleSystem:
 
 
         # init buffers & shader program
-        self.shader = Shader(vertex_source="world/particles/smoke/smoke.vert", geom_source="world/particles/smoke/smoke.geom", fragment_source="world/particles/smoke/smoke.frag")
-        self.cs = Shader(compute_source="world/particles/smoke/update.comp.glsl")
+        self.shader = Shader(vertex_source="world/particles/splashes/splash.vert", geom_source="world/particles/splashes/splash.geom", fragment_source="world/particles/splashes/splash.frag")
+        self.cs = Shader(compute_source="world/particles/splashes/update.comp.glsl")
 
         # binding the ssbos to the compute shader program && generating buffers
         self.init_ssbos(shader_pgrm=self.cs.glid, attributes=dict(pos=np.array(self.positions, dtype=np.float32), vel=self.velocities, init_pos=np.array(self.init_pos, dtype=np.float32), init_vel=self.init_vel))
 
         # binding the ssbo containing the positions to the vertex shader
         ssbo_loc = GL.glGetProgramResourceIndex(self.shader.glid, GL.GL_SHADER_STORAGE_BLOCK, "pos")
-        GL.glShaderStorageBlockBinding(self.shader.glid, ssbo_loc, 0)
+        GL.glShaderStorageBlockBinding(self.shader.glid, ssbo_loc, 4)
 
         ssbo_loc = GL.glGetProgramResourceIndex(self.shader.glid, GL.GL_SHADER_STORAGE_BLOCK, "init_pos")
-        GL.glShaderStorageBlockBinding(self.shader.glid, ssbo_loc, 2)
+        GL.glShaderStorageBlockBinding(self.shader.glid, ssbo_loc, 6)
 
-        self.sprites = Texture(path_img="textures/particles_atlas.png")
 
     def init_ssbos(self, shader_pgrm, attributes):
         self.buffers = {}  # we will store buffers in a named dict
 
-        buffer_count = 0
+        buffer_count = 4
         for name, data in attributes.items(): 
 
             #setting ssbo's binding point
@@ -62,7 +60,6 @@ class SmokeParticleSystem:
             self.buffers[name] = GL.glGenBuffers(1)
             GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, self.buffers[name])
 
-            print(f"size bytes = {data.nbytes} && stride = {data.itemsize}")
             GL.glBufferData(GL.GL_SHADER_STORAGE_BUFFER, data.nbytes, data, GL.GL_DYNAMIC_DRAW)
             GL.glBindBufferBase(GL.GL_SHADER_STORAGE_BUFFER, buffer_count, self.buffers[name])
             
@@ -87,15 +84,9 @@ class SmokeParticleSystem:
         # rendering particles
 
         # binding atlas
-        GL.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glBindTexture(self.sprites.type, self.sprites.glid)
-
-
         self.shader.bind()
-        self.shader.set_int("sprites", 0)
         self.shader.set_uniforms(dict(view=camera.view, proj=camera.proj, up=camera.up, rgt=camera.rgt))
 
         # draw
-        GL.glEnable(GL.GL_BLEND)
         self.execute()
 

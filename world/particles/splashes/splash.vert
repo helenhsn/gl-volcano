@@ -1,10 +1,10 @@
 #version 430 core
 
-layout(std430, binding=0) buffer pos {   
+layout(std430, binding=4) buffer pos {   
     vec4 positions[];  
 };
 
-layout(std430, binding=2) buffer init_pos {   
+layout(std430, binding=6) buffer init_pos {   
     vec4 positions_0[];
 };
 
@@ -20,7 +20,7 @@ void main() {
 
     // passing down to the geometry shader
     OUTPUT.lifetime = positions[gl_VertexID].w;
-    OUTPUT.size = 20.0;
+    OUTPUT.size = 0.5;
     OUTPUT.pos = positions[gl_VertexID].xyz;
     OUTPUT.initial_lifetime = positions_0[gl_VertexID].w;
     gl_Position = vec4(positions[gl_VertexID].xyz, 1);

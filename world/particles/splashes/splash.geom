@@ -24,7 +24,7 @@ out GS_OUTPUT {
 void main() {
     // we need to create a quad for each particle.
     vec3 pos = gl_in[0].gl_Position.xyz;
-    float life_percentage = clamp(IN[0].lifetime/IN[0].initial_lifetime, 0.0, 1.0);
+    float life_percentage = IN[0].lifetime/IN[0].initial_lifetime;
     mat4 view_proj = proj*view;
 
     // TOP RIGHT CORNER
