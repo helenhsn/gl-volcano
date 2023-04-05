@@ -33,7 +33,7 @@ void main() {
     vec3 diffuse = dif * light_col;
 
     out_color.rgb = n;
-    //out_color.rgb = (ambient*0.5 + diffuse) * albedo;
+    out_color.rgb = (ambient*0.5 + diffuse) * albedo;
     //out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
     //out_color = vec4(out_normal,1);
 }
