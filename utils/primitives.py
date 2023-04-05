@@ -195,7 +195,7 @@ class Cylinder(Mesh):
 
         self.index = np.array(index, np.uint32)
 
-        attributes = dict(position=position, color=self.normal)
+        attributes = dict(position=position, color=self.color, normal=self.normal)
         super().__init__(shader, attributes=attributes, index=self.index)
 
 
