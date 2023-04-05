@@ -41,32 +41,40 @@ def make_tree():
     cylinder = Cylinder(shader, 10, 1, 0.5)
 
     #on crée 3 cylindres pour la base de l'arbre et on les met tous sur l'axe 0:
-    base_shape = Node(transform=translate(0, b, 0) @ scale(a, b, a))
+    base_shape = Node(transform=translate(0, b, 0) @ scale(a, b, a) @ rotate(no_axis, no_angle))
     middle_shape = Node(transform=translate(0, 1.5*b, 0) @ scale(e, 1.5*b, e))
     upper_shape = Node(transform=translate(0, 2*b, 0) @ scale(c, 2*b, c))
 
-    base_shape.add(cylinder)
-    middle_shape.add(cylinder)
     upper_shape.add(cylinder)
+    middle_shape.add(cylinder)
+    base_shape.add(cylinder)
+
+    base_transform = Node(transform=rotate(no_axis, no_angle))
+    middle_transform = Node(transform=rotate(no_axis, no_angle) @ translate(0, 1*b, 0))
+    upper_transform = Node(transform=rotate(no_axis, no_angle) @ translate(0, b, 0))
+
+    upper_transform.add(upper_shape)
+    middle_transform.add(middle_shape, upper_transform)
+    base_transform.add(base_shape, middle_transform)
 
     #on fait les rotations :
-    rotation_base = Node(transform=rotate(no_axis, no_angle))
-    rotation_middle = Node(transform=rotate(no_axis, no_angle))
-    rotation_upper = Node(transform=rotate(no_axis, no_angle))
+    # rotation_base = Node(transform=rotate(no_axis, no_angle))
+    # rotation_middle = Node(transform=rotate(no_axis, no_angle))
+    # rotation_upper = Node(transform=rotate(no_axis, no_angle))
 
-    rotation_base.add(base_shape)
-    rotation_middle.add(middle_shape)
-    rotation_upper.add(upper_shape)
+    # rotation_base.add(base_shape)
+    # rotation_middle.add(middle_shape)
+    # rotation_upper.add(upper_shape)
 
-    #on fait les translations nécessaires :
-    translation_base = Node()
-    translation_middle = Node(transform=translate(0, b, 0)) #on met le cylindre du milieu au milieu du cylindre d'en bas
-    translation_upper = Node(transform=translate(0, 1*b, 0)) #on met le cylindre d'en haut au milieu du cylindre du milieu
+    # #on fait les translations nécessaires :
+    # translation_base = Node()
+    # translation_middle = Node(transform=translate(0, b, 0)) #on met le cylindre du milieu au milieu du cylindre d'en bas
+    # translation_upper = Node(transform=translate(0, 1*b, 0)) #on met le cylindre d'en haut au milieu du cylindre du milieu
 
 
-    translation_base.add(rotation_base, translation_middle)
-    translation_middle.add(rotation_middle, translation_upper)
-    translation_upper.add(rotation_upper)
+    # translation_base.add(rotation_base, translation_middle)
+    # translation_middle.add(rotation_middle, translation_upper)
+    # translation_upper.add(rotation_upper)
 
     #on crée les branches :
     # tree_rec2(1, cylinder, translate(0, 4*b, 0), translation_upper, rotate(no_axis, no_angle), no_angle, size, 0.05*epaisseur, 0.8, angle)
@@ -88,7 +96,7 @@ def make_tree():
     # tree_rec2(1, cylinder, translate(0, 4*b, 0), eigth_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
     
     
-    return translation_base
+    return base_transform
 
 def tree_rec2(occurence, shape, translation_parent, adding_support, rotation_parent, angle_parent, size, radius, factor, angle):
     from core import Node
