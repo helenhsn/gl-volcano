@@ -11,6 +11,19 @@ import numpy as np                  # all matrix manipulations & OpenGL args
 import glfw
 import ctypes
 
+# function that caculates all sines and cosines of the unit circle depending on a number of slices required
+def init_cos_sin(slices):
+    theta_incr = 2*np.pi/slices
+    cosines = []
+    sines = []
+    for i in range(slices):
+        theta = i*theta_incr
+        cosines.append(np.cos(theta))
+        sines.append(np.sin(theta))
+    return cosines, sines
+
+
+
 class VertexArray:
     """ helper class to create and self destroy OpenGL vertex array objects."""
     def __init__(self, shader, attributes, index=None, usage=GL.GL_STATIC_DRAW):
@@ -114,99 +127,57 @@ class Triangle(Mesh):
 
 class Cylinder(Mesh):
     """ Class for drawing a cylinder object """
-    def __init__(self, shader, number_facets, radius_facet_up, radius_facet_down):
+    def __init__(self, shader, slices, height, radius_facet_up, radius_facet_down, cosines, sines):
         self.shader = shader
-        #angles
-        theta_init = 0.0
-        theta_max = 2*np.pi
-        theta_incr = theta_max/number_facets
-        #hauteurs
-        h_base1 = -1
-        h_base2 = 1
+        
+        #cos, sin = init_cos_sin(slices)
+        radiuses = [radius_facet_up, radius_facet_down]
+
         position = []
         normal = []
         index = []
-        counter = 0
 
-        #création de l'enveloppe du cylindre
-        theta = theta_init
-        while(theta < theta_max):
-            #on découpe le cylindre en rectangles qu'on découpe eux-mêmes en triangles
-            #on fait 4 points
-            A = (radius_facet_up*np.cos(theta), h_base1, radius_facet_up*np.sin(theta))
-            C = (radius_facet_down*np.cos(theta), h_base2, radius_facet_down*np.sin(theta))
-            B = (radius_facet_up*np.cos(theta + theta_incr), h_base1, radius_facet_up*np.sin(theta + theta_incr))
-            D = (radius_facet_down*np.cos(theta + theta_incr), h_base2, radius_facet_down*np.sin(theta + theta_incr))
-            #on ajoute les 3 points chaque triangle pour dessiner nos rectanlges
-            position.append(A)
-            normal.append((np.cos(theta), 0, np.sin(theta)))
-            position.append(B)
-            normal.append((np.cos(theta + theta_incr), 0, np.sin(theta + theta_incr)))
-            position.append(C)
-            normal.append((np.cos(theta), 0, np.sin(theta)))
-            position.append(C)
-            normal.append((np.cos(theta), 0, np.sin(theta)))
-            position.append(B)
-            normal.append((np.cos(theta + theta_incr), 0, np.sin(theta + theta_incr)))
-            position.append(D)
-            normal.append((np.cos(theta + theta_incr), 0, np.sin(theta + theta_incr)))
+        # lateral faces
+        for i in range(slices):
+            counter = 2*i
+            index.append(((counter+2)%(2*slices), counter+1, counter))
+            index.append(((counter+3)%(2*slices), counter+1, (counter+2)%(2*slices)))
 
-            
-            #on incrémente à chaque itération theta
-            theta = theta + theta_incr
-
-            #on a ajouté 6 points donc on doit ajouter les index correspondants
-            for _ in range(0, 6):
-                index.append(counter)
-                counter += 1
-            
-        #création des deux faces du cylindre, une pour chaque hauteur
-        for hauteur in (h_base1, h_base2):
-            theta = theta_init
-            if hauteur == h_base1:
-                radius = radius_facet_up
-            else:
-                radius = radius_facet_down
-            A = (0, hauteur, 0) #le point au centre du cercle - ça sera toujours le même donc on peut le créer dans le for directement
-
-            while(theta < theta_max):
-                #on découpe en triangles le cercle
-                B = (radius*np.cos(theta), hauteur, radius*np.sin(theta))
-                C = (radius*np.cos(theta+theta_incr), hauteur, radius*np.sin(theta+theta_incr))
-
-                position.append(A)
-                position.append(B)
-                position.append(C)
-
-                theta = theta + theta_incr
-                #on a ajouté 6 points donc on doit ajouter les index correspondants
-                for _ in range(0,3):
-                    index.append(counter)
-                    counter += 1
-                    if(hauteur == h_base1):
-                        normal.append((0, -1, 0))
-                    else:
-                        normal.append((0, 1, 0))
+            for j in range(2):
+                h = height/2 - height * j
+                position.append((cosines[i] * radiuses[j], h, sines[i] * radiuses[j]))
+                normal.append((cosines[i], 0, sines[i]))
+        
+        
+        for j in range(2):
+            h = height/2 - height * j
+            position.append((0, h, 0))
+        
+        #top and bottom of cylinder
+        for i in range(slices):
+            counter = 2*i
+            for j in range(2):
+                a = 1/2
+                index.append(((counter+2)%(2*slices), 2*slices, counter))
+                index.append(((counter+3)%(2*slices), 2*slices+1, (counter+1)%(2*slices)))
+                normal.append((0, a, 0))
+                normal.append((0, -a, 0))
 
         self.position = np.array((position), 'f')
         self.normal = np.array(normal, 'f')
         self.color = self.position
 
-
         self.index = np.array(index, np.uint32)
 
-        attributes = dict(position=position, color=self.color, normal=self.normal)
+        attributes = dict(position=position, color=self.normal, normal = self.normal)
         super().__init__(shader, attributes=attributes, index=self.index)
-
 
 
     def draw(self, primitives=GL.GL_TRIANGLES, attributes=None, **uniforms):
         """
-            Dessine la forme
+            Draw the cylinder
         """
-        #On peut refaire un dictionnaire pour modifier la couleur (on peut écraser que
-        # l'un des deux attribut car les buffers sont différents !)
-        attributes = dict(color=self.normal) #on a besoin que de color qu'on envoie dans draw
+        attributes = dict(color=self.normal, normal=self.normal)
         super().draw(primitives=primitives, attributes=attributes, **uniforms)
 
 

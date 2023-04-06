@@ -19,7 +19,7 @@ SEUIL = 0.5
 FACTOR = 0.9
 
 
-def make_tree():
+def make_tree(cos, sin):
     from core import Node
 
     """ Creates the bottom of the tree with 3 sections """
@@ -38,7 +38,7 @@ def make_tree():
     no_angle = 0
     
     shader = Shader(vertex_source="world/tree/shaders/tree.vert", fragment_source="world/tree/shaders/tree.frag")
-    cylinder = Cylinder(shader, 10, 1, 0.5)
+    cylinder = Cylinder(shader, 10, 2, 1/2, 1, cos, sin)
 
     #on crée 3 cylindres pour la base de l'arbre et on les met tous sur l'axe 0:
     base_shape = Node(transform=translate(0, b, 0) @ scale(a, b, a) @ rotate(no_axis, no_angle))

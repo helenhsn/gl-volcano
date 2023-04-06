@@ -8,7 +8,7 @@ import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 import assimpcy
-from utils.primitives import Mesh                     # 3D resource loader
+from utils.primitives import Mesh, init_cos_sin # 3D resource loader
 
 
 # our transform functions
@@ -258,7 +258,8 @@ class Viewer(Node):
         self.smoke_ps = SmokeParticleSystem()
 
         # trees
-        self.trees = [make_tree()]
+        cosines, sines = init_cos_sin(10)
+        self.trees = [make_tree(cosines, sines)]
         self.trees = move_tree(self.trees, [(900.0, 280.0, 900.0)])
 
     def run(self):
