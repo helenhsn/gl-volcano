@@ -35,7 +35,7 @@ void main() {
     out_color = vec4(n, 1);
     //out_color = vec4(out_normal, 1);
     //out_color = vec4(tree_color, 1);
-    out_color.rgb = out_normal;//(ambient*0.5 + diffuse) * tree_color;
+    out_color.rgb = n;//(ambient*0.5 + diffuse) * tree_color;
     //out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
     //out_color = vec4(out_normal,1);
 }
