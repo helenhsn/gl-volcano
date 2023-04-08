@@ -251,7 +251,7 @@ class Viewer(Node):
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
         # skybox init
-        self.skybox = Skybox(500.0)
+        self.skybox = Skybox(1.0)
 
         # terrain/ocean mesh related attributes
         self.chunk_size = size
@@ -281,14 +281,11 @@ class Viewer(Node):
             projection_matrix = self.camera.projection_matrix(win_size)
             
 
-
-            GL.glClearColor(0.3, 0.4, 0.6, 0.1)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
             # opaque objects
             # self.trees[0].draw(view=view_matrix,
             #             projection=projection_matrix,
             #             w_camera_position=self.camera.camera_pos)
+
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
@@ -296,14 +293,11 @@ class Viewer(Node):
 
             # skybox (optimization)
             # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
-            GL.glDisable(GL.GL_DEPTH_TEST)
-            GL.glDepthMask(GL.GL_FALSE)
-        
+            GL.glDepthFunc(GL.GL_LEQUAL)
+            GL.glDisable(GL.GL_CULL_FACE)
             self.skybox.draw(view=view_matrix, proj=projection_matrix)
-
-            GL.glEnable(GL.GL_DEPTH_TEST)
-            GL.glDepthMask(GL.GL_TRUE)
-
+            GL.glEnable(GL.GL_CULL_FACE)
+            GL.glDepthFunc(GL.GL_LESS)
             # transparent objects
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendEquation(GL.GL_FUNC_ADD)
@@ -312,13 +306,15 @@ class Viewer(Node):
             self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
             GL.glDepthMask(GL.GL_TRUE)
             GL.glDisable(GL.GL_BLEND)  
-                
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
 
             # Poll for and process events
             glfw.poll_events()
+
+            GL.glClearColor(0.3, 0.4, 0.6, 0.1)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
     def on_key(self, _win, key, _scancode, action, _mods):
 

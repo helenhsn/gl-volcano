@@ -9,6 +9,7 @@ out vec3 tex_coords; // vec3 because we're sampling a 3D texture (cubemap textur
 void main() {
     // model matrix isn't used here as we don't rotate/translate/scale the skybox
     // view is clamped to 3x3 matrix as we disable translation
-    gl_Position = proj * view * vec4(position, 1.0);
+    vec4 pos = proj * mat4(mat3(view)) * vec4(position, 1.0);
     tex_coords = position;
+    gl_Position = pos.xyww;
 }
