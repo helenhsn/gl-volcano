@@ -128,7 +128,7 @@ class Triangle(Mesh):
 class Cylinder(Mesh):
     """ Class for drawing a cylinder object """
     def __init__(self, shader, slices, height, radius_facet_up, radius_facet_down, cosines, sines):
-        self.shader = shader        
+        self.shader = shader
         radiuses = [radius_facet_up, radius_facet_down]
 
         position = []
@@ -139,8 +139,8 @@ class Cylinder(Mesh):
         for i in range(slices):
             counter = 2*i
             # we add a square made of two triangles
-            index.append(((counter+2)%(2*slices), counter+1, counter))
-            index.append(((counter+3)%(2*slices), counter+1, (counter+2)%(2*slices)))
+            index.append(((counter+2)%(2*slices), counter, counter+1))
+            index.append(((counter+3)%(2*slices), (counter+2)%(2*slices), counter+1))
             # we add new vertex and its normal
             for j in range(2):
                 h = height/2 - height * j
@@ -155,11 +155,11 @@ class Cylinder(Mesh):
                 a = 1/2 - 1*j
                 position.append((cosines[i] * radiuses[j], h, sines[i] * radiuses[j]))
                 normal.append((0, a, 0))
-            index.append(((counter+2+2*slices)%(4*slices), counter+2*slices, 4*slices))
-            index.append(((counter+3+2*slices)%(4*slices), counter+1+2*slices, 4*slices+1))
+            index.append(((counter+2+2*slices)%(4*slices), 4*slices, counter+2*slices))
+            index.append(((counter+3+2*slices)%(4*slices), 4*slices+1, counter+1+2*slices))
         # we need to add the two last triangles manually
-        index.append(((2*slices), 4*slices-2, 4*slices))
-        index.append(((2*slices+1), 4*slices-1, 4*slices+1))
+        index.append(((2*slices), 4*slices, 4*slices-2))
+        index.append(((2*slices+1), 4*slices+1, 4*slices-1))
         normal.append((0, 1/2, 0))
         normal.append((0, -1/2, 0))
         # and we add the last two vertices we didn't add in the for loop before 
@@ -179,7 +179,7 @@ class Cylinder(Mesh):
 
         self.index = np.array(index, np.uint32)
 
-        attributes = dict(position=position, color=self.normal, normal = self.normal)
+        attributes = dict(position=position, normal=self.normal)
         super().__init__(shader, attributes=attributes, index=self.index)
 
 
@@ -187,8 +187,7 @@ class Cylinder(Mesh):
         """
             Draw the cylinder
         """
-        attributes = dict(color=self.normal, normal=self.normal)
-        super().draw(primitives=primitives, attributes=attributes, **uniforms)
+        super().draw(primitives=primitives, **uniforms)
 
 
 

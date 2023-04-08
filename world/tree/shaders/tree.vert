@@ -20,7 +20,7 @@ out vec3 out_normal;
 void main() {
     // initialize interpolated colors at vertices
     fragment_color = color + normal + global_color;
-    out_normal = (model * vec4(normal, 1)).xyz;
+    out_normal = normal;
     // tell OpenGL how to transform the vertex to clip coordinates
     gl_Position = projection * view * model * vec4(position, 1);
 }
