@@ -43,7 +43,7 @@ class Camera:
         return self.view
 
     def projection_matrix(self, winsize):
-        self.proj = perspective(45, winsize[0] / winsize[1], 0.1, 10000.0)
+        self.proj = perspective(45, winsize[0] / winsize[1], 0.1, 15000.0)
         return self.proj
 
     def handle_keys(self, key, action, delta_time):
