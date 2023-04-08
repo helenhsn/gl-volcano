@@ -128,9 +128,7 @@ class Triangle(Mesh):
 class Cylinder(Mesh):
     """ Class for drawing a cylinder object """
     def __init__(self, shader, slices, height, radius_facet_up, radius_facet_down, cosines, sines):
-        self.shader = shader
-        
-        #cos, sin = init_cos_sin(slices)
+        self.shader = shader        
         radiuses = [radius_facet_up, radius_facet_down]
 
         position = []
@@ -140,28 +138,40 @@ class Cylinder(Mesh):
         # lateral faces
         for i in range(slices):
             counter = 2*i
+            # we add a square made of two triangles
             index.append(((counter+2)%(2*slices), counter+1, counter))
             index.append(((counter+3)%(2*slices), counter+1, (counter+2)%(2*slices)))
-
+            # we add new vertex and its normal
             for j in range(2):
                 h = height/2 - height * j
                 position.append((cosines[i] * radiuses[j], h, sines[i] * radiuses[j]))
                 normal.append((cosines[i], 0, sines[i]))
         
-        
-        for j in range(2):
-            h = height/2 - height * j
-            position.append((0, h, 0))
-        
-        #top and bottom of cylinder
-        for i in range(slices):
+        # we add again all the vertices but stop before adding the two last triangles
+        for i in range(slices-1):
             counter = 2*i
             for j in range(2):
-                a = 1/2
-                index.append(((counter+2)%(2*slices), 2*slices, counter))
-                index.append(((counter+3)%(2*slices), 2*slices+1, (counter+1)%(2*slices)))
+                h = height/2 - height * j
+                a = 1/2 - 1*j
+                position.append((cosines[i] * radiuses[j], h, sines[i] * radiuses[j]))
                 normal.append((0, a, 0))
-                normal.append((0, -a, 0))
+            index.append(((counter+2+2*slices)%(4*slices), counter+2*slices, 4*slices))
+            index.append(((counter+3+2*slices)%(4*slices), counter+1+2*slices, 4*slices+1))
+        # we need to add the two last triangles manually
+        index.append(((2*slices), 4*slices-2, 4*slices))
+        index.append(((2*slices+1), 4*slices-1, 4*slices+1))
+        normal.append((0, 1/2, 0))
+        normal.append((0, -1/2, 0))
+        # and we add the last two vertices we didn't add in the for loop before 
+        position.append((cosines[slices-1] * radiuses[0], height/2, sines[slices-1] * radiuses[0]))
+        position.append((cosines[slices-2] * radiuses[1], -height/2, sines[slices-2] * radiuses[1]))
+
+        # add bottom and top points
+        for j in range(2):
+            h = height/2 - height * j
+            a = 1/2 - 1*j
+            position.append((0, h, 0))
+            normal.append((0, a, 0))
 
         self.position = np.array((position), 'f')
         self.normal = np.array(normal, 'f')
