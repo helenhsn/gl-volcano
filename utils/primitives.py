@@ -189,6 +189,26 @@ class Cylinder(Mesh):
         """
         super().draw(primitives=primitives, **uniforms)
 
+class Cube(Mesh):
+    def __init__(self, shader, r):
+         # front face regarding the camera but back face regarding world
+        positions = [
+            (-r, r, -r), 
+            (-r, -r, -r),
+            (r, -r, -r),
+            (r, r, -r),
+            (-r, r, r),
+            (-r, -r, r),
+            (r, -r, r),
+            (r, r, r)
+        ]
+        indices=[0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 7, 2, 6, 7, 3, 2, 0, 5, 1, 0, 4, 5, 4, 0, 3, 4, 3, 7, 5, 2, 1, 5, 6, 2]
+
+        super().__init__(shader, attributes=dict(position=positions), index=indices)
+    
+    def draw(self, primitives=GL.GL_TRIANGLES, **uniforms): 
+        super().draw(primitives=primitives, **uniforms)
+
 
 
 class Grid(Mesh):
@@ -203,7 +223,7 @@ class Grid(Mesh):
             for y in range (0, size):
                 x = float(x)
                 y = float(y)
-                vertices.append((x*4, 0.0, y*4))
+                vertices.append((x*4, 0.0, y*4)) # stretching the mesh -> less computation for the same surface's size
                 normals.append((0.0, 1.0, 0.0))
                 uv.append((x/(size-1), y/(size-1)))
 
@@ -228,4 +248,4 @@ class Grid(Mesh):
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
         
         super().draw(primitives=primitives, size=self.size, **uniforms)
-        
+

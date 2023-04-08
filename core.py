@@ -15,6 +15,7 @@ from utils.primitives import Mesh, init_cos_sin # 3D resource loader
 from utils.transform import Trackball, identity, vec, translate
 from utils.camera import Camera
 from world.block import Chunk
+from world.skybox.skybox import Skybox
 from world.tree.tree import make_tree, move_tree
 
 import os
@@ -249,6 +250,9 @@ class Viewer(Node):
         # cyclic iterator to easily toggle polygon rendering modes
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
+        # skybox init
+        self.skybox = Skybox(500.0)
+
         # terrain/ocean mesh related attributes
         self.chunk_size = size
         self.chunk = Chunk(size, 4)
@@ -266,12 +270,9 @@ class Viewer(Node):
         """ Main render loop for this OpenGL window """
         while not glfw.window_should_close(self.win):
 
-            GL.glClearColor(0.1, 0.1, 0.2, 0.1)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
+            # update viewer's attributes
             win_size = glfw.get_window_size(self.win)
 
-            # updating time
             current_frame = glfw.get_time()
             self.delta_time = current_frame - self.last_frame
             self.last_frame = current_frame
@@ -279,14 +280,31 @@ class Viewer(Node):
             view_matrix = self.camera.view_matrix()
             projection_matrix = self.camera.projection_matrix(win_size)
             
-            # draw our scene objects
-            self.trees[0].draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos)
+
+
+            GL.glClearColor(0.3, 0.4, 0.6, 0.1)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
+            # opaque objects
+            # self.trees[0].draw(view=view_matrix,
+            #             projection=projection_matrix,
+            #             w_camera_position=self.camera.camera_pos)
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
 
+
+            # skybox (optimization)
+            # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
+            GL.glDisable(GL.GL_DEPTH_TEST)
+            GL.glDepthMask(GL.GL_FALSE)
+        
+            self.skybox.draw(view=view_matrix, proj=projection_matrix)
+
+            GL.glEnable(GL.GL_DEPTH_TEST)
+            GL.glDepthMask(GL.GL_TRUE)
+
+            # transparent objects
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendEquation(GL.GL_FUNC_ADD)
             GL.glDepthMask(GL.GL_FALSE)

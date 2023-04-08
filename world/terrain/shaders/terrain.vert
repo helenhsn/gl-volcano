@@ -114,10 +114,37 @@ vec3 get_normal(vec3 p) {
     return normalize(n);
 }
 
+vec3 albedo_from_height(float height)
+{
+
+
+    vec3 colors[4];
+
+    colors[0] = vec3(0.1059, 0.1059, 0.1059);
+    colors[1] = vec3(0.1098, 0.2667, 0.1765);
+    colors[2] = vec3(0.0863, 0.0863, 0.0863);
+    colors[3] = vec3(0.0549, 0.0196, 0.0196);
+    if(height < 0.0)
+        return vec3(0.7333, 0.0549, 0.451);
+    else
+    {
+        float hscaled = clamp((height - 200)/(1000 - 200), 0., 1.); //btw 0. && 1.
+        vec3 base_color = vec3(0., 0., 1.);
+        if (hscaled < 0.13)
+            return mix(colors[0], colors[1], hscaled/0.13);
+        if ( 0.13 < hscaled  && hscaled < 0.20)
+            return mix(colors[1], colors[2], (hscaled - 0.13)/(0.20 - 0.13));
+        else
+            return mix(colors[2], colors[3], (hscaled-0.15)/(1. - 0.15));
+        return base_color;
+    }
+}
+
 out VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
+    vec3 albedo;
 } OUTPUT;
 
 void main() {
@@ -129,5 +156,5 @@ void main() {
     OUTPUT.position = (model * vec4(pos, 1.)).xyz;
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
     OUTPUT.normal = map_coefs.yzw;
-
+    OUTPUT.albedo = albedo_from_height(OUTPUT.position.y);
 }

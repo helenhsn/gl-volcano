@@ -115,7 +115,7 @@ vec3 get_normal(vec2 p) {
 void main() {
     ivec2 x	= ivec2(gl_GlobalInvocationID.xy);
     
-    vec3 world_pos = (transpose(model) * vec4(x.x * scale_factor, 0., x.y*scale_factor, 1.)).xyz;
+    vec3 world_pos = (model * vec4(x.x * scale_factor, 0., x.y*scale_factor, 1.)).xyz;
 
     imageStore(map, x, vec4(height_terrain(world_pos.xz), get_normal(world_pos.xz)));
 }

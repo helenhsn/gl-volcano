@@ -12,7 +12,7 @@ class Camera:
         self.speed = vec(0.0, 0.0, 0.0)
         self.speed = 300.0
         self.sensitivity = 0.1
-        self.pitch = -10.0
+        self.pitch = 0.0
         self.yaw = 90.0
         self.update_vectors()
 
@@ -37,8 +37,6 @@ class Camera:
 
 
     def view_matrix(self):
-
-
         rotation = np.identity(4)
         rotation[:3, :3] = np.vstack([self.rgt, self.up, -self.fwd])
         self.view = rotation @ translate(-self.camera_pos)

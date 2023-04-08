@@ -126,7 +126,7 @@ class Shader:
     def set_mat4(self, name, value):
         loc = GL.glGetUniformLocation(self.glid, name)
         if loc !=-1:
-            GL.glUniformMatrix4fv(loc, 1, GL.GL_FALSE, value)
+            GL.glUniformMatrix4fv(loc, 1, GL.GL_TRUE, value)
 
     def set_image2d_read(self, name, image):
         loc = GL.glGetUniformLocation(self.glid, name)
