@@ -10,7 +10,7 @@ class Camera:
         self.fwd = vec(0.0, 0.0, -1.0)
 
         self.speed = vec(0.0, 0.0, 0.0)
-        self.speed = 300.0
+        self.speed = 3.0
         self.sensitivity = 0.1
         self.pitch = 0.0
         self.yaw = 90.0
