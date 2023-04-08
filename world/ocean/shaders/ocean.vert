@@ -1,10 +1,13 @@
-#version 330 core
+#version 430 core
 
 in vec3 position;
 in vec2 uv;
 in vec3 normal;
 
-uniform mat4 model;
+layout(std430, binding=8) buffer model_matrices {   
+    mat4 model_matrix[];  
+};
+
 uniform mat4 view;
 uniform mat4 projection;
 uniform sampler2D displacement;
@@ -140,13 +143,16 @@ out VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
-    vec3 col;
+    mat4 col;
+
 } OUTPUT;
 
 void main() {
     vec2 Uv = fract(uv+ 1./256.);
 
-    vec3 d = texture(displacement, Uv).rgb;
+    mat4 model = transpose(model_matrix[gl_InstanceID]);
+
+    vec3 d = texture(displacement, Uv).rgb + vec3(0., 70.0, 0.0);
     vec3 grad = texture(gradients, Uv).xzy;
 
     OUTPUT.uv = uv;
@@ -159,12 +165,11 @@ void main() {
 
     // flattening ocean under the island
     float noise_cliff = fbm(world_pos.xz, 1000.0, .55, 0.002, 2.0)*0.5 + 0.5; // gives a rusty appearance to our island
-    float clamp_factor = smoothstep(-2100-700, -2100, length(world_pos.xz)+noise_cliff) -1 + smoothstep(2100+700, 2100, length(world_pos.xz)+noise_cliff);
+    float clamp_factor = smoothstep(-2000-700, -2000, length(world_pos.xz)+noise_cliff) -1 + smoothstep(2000+700, 2000, length(world_pos.xz)+noise_cliff);
     clamp_factor *= clamp_factor;
 
     OUTPUT.position = blend_height(world_pos, clamp_factor);
-    OUTPUT.col = d;
     OUTPUT.normal = blend_normal(n, clamp_factor);
-
+    OUTPUT.col = model;
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
 }

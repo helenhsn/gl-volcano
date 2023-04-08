@@ -251,11 +251,11 @@ class Viewer(Node):
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
         # skybox init
-        self.skybox = Skybox(1.0)
+        self.skybox = Skybox(50.0)
 
         # terrain/ocean mesh related attributes
         self.chunk_size = size
-        self.chunk = Chunk(size, 4)
+        self.chunk = Chunk(size, 4, N=4)
 
         # particle system init
         self.splash_ps = SplashParticleSystem()   
@@ -282,9 +282,9 @@ class Viewer(Node):
             
 
             # opaque objects
-            # self.trees[0].draw(view=view_matrix,
-            #             projection=projection_matrix,
-            #             w_camera_position=self.camera.camera_pos)
+            self.trees[0].draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos)
 
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
@@ -298,6 +298,7 @@ class Viewer(Node):
             self.skybox.draw(view=view_matrix, proj=projection_matrix)
             GL.glEnable(GL.GL_CULL_FACE)
             GL.glDepthFunc(GL.GL_LESS)
+
             # transparent objects
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendEquation(GL.GL_FUNC_ADD)

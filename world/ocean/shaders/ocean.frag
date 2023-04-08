@@ -4,7 +4,7 @@ in VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
-    vec3 col;
+    mat4 col;
 } IN;
 
 #define PI 3.14159265359

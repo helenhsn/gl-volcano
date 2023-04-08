@@ -4,28 +4,31 @@ import OpenGL.GL as GL
 from utils.shaders import Shader
 from utils.texture import Texture
 from utils.transform import identity, translate              # standard Python OpenGL wrapper
-
+import numpy as np
 class Terrain:
-    def __init__(self, size, scale_factor, model_matrices):
+    def __init__(self, size, size_factor, model_matrices, N):
         self.size = size
-        self.grid = Grid(Shader(vertex_source="world/terrain/shaders/terrain.vert", fragment_source="world/terrain/shaders/terrain.frag"), size=size)
-        self.scale_factor = scale_factor
-        self.maps = dict()
+        self.grid = Grid(Shader(vertex_source="world/terrain/shaders/terrain.vert", fragment_source="world/terrain/shaders/terrain.frag"), size=size, size_factor=size_factor)
+        self.scale_factor = size_factor
+        self.twoN = 2*N
+        self.N = N//2
+        self.maps = np.zeros(self.twoN * self.twoN, dtype=Texture)
         self.model_matrices = model_matrices
-        N = 4
         cs = Shader(compute_source="world/terrain/shaders/cs/terrain.comp.glsl")
-        for i in range (-N, N):
-            for j in range(-N, N):
-                current_model = model_matrices[(i,j)]
-                self.maps[(i, j)] = self.get_map(current_model, cs)
+        for i in range (-self.N, self.N):
+            for j in range(-self.N, self.N):
+                index = i* self.twoN + j
+                self.maps[index] = self.get_map(model_matrices[index], cs)
 
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
-        for tup, map in self.maps.items():
-            GL.glActiveTexture(GL.GL_TEXTURE0)
-            GL.glBindTexture(map.type, map.glid)
-            self.grid.shader.bind()
-            self.grid.shader.set_int("map", 0)
-            self.grid.draw(primitives=primitives, model=self.model_matrices[tup], **uniforms)
+        for i in range (-self.N, self.N):
+            for j in range (-self.N, self.N):
+                index = i* self.twoN + j
+                GL.glActiveTexture(GL.GL_TEXTURE0)
+                GL.glBindTexture(self.maps[index].type, self.maps[index].glid)
+                self.grid.shader.bind()
+                self.grid.shader.set_int("map", 0)
+                self.grid.draw(primitives=primitives, model=self.model_matrices[index], **uniforms)
 
 
     def get_map(self, model, cs):

@@ -59,13 +59,13 @@ class VertexArray:
         self.arguments = (0, nb_primitives)
         if index is not None:
             self.buffers['index'] = GL.glGenBuffers(1)
-            index_buffer = np.array(index, np.int32, copy=False)  # good format
+            self.index_buffer = np.array(index, np.int32, copy=False)  # good format
             GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, self.buffers['index'])
-            GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, index_buffer, usage)
+            GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, self.index_buffer, usage)
             self.draw_command = GL.glDrawElements
-            self.arguments = (index_buffer.size, GL.GL_UNSIGNED_INT, None)
+            self.arguments = (self.index_buffer.size, GL.GL_UNSIGNED_INT, None)
 
-    def execute(self, primitive, attributes=None):
+    def execute(self, primitive, attributes=None, draw_command=None):
         """ draw a vertex array, either as direct array or indexed array """
         # optionally update the data attribute VBOs, useful for e.g. particles
         attributes = attributes or {}
@@ -75,7 +75,11 @@ class VertexArray:
                 GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, data)
 
         GL.glBindVertexArray(self.glid)
-        self.draw_command(primitive, *self.arguments)
+
+        if not draw_command:
+            self.draw_command(primitive, *self.arguments)
+        else:
+            draw_command(primitive, *self.arguments)
 
     def __del__(self):  # object dies => kill GL array and buffers from GPU
         GL.glDeleteVertexArrays(1, [self.glid])
@@ -91,10 +95,10 @@ class Mesh:
         self.uniforms = uniforms
         self.vertex_array = VertexArray(shader, attributes, index, usage)
 
-    def draw(self, primitives=GL.GL_TRIANGLES, attributes=None, **uniforms):
+    def draw(self, primitives=GL.GL_TRIANGLES, attributes=None, draw_command=None, **uniforms):
         GL.glUseProgram(self.shader.glid)
         self.shader.set_uniforms({**self.uniforms, **uniforms})
-        self.vertex_array.execute(primitives, attributes)
+        self.vertex_array.execute(primitives, attributes, draw_command=draw_command)
 
 
 class Axis(Mesh):
@@ -212,7 +216,7 @@ class Cube(Mesh):
 
 
 class Grid(Mesh):
-    def __init__(self, shader, size): #size = grid's length & width = square grid
+    def __init__(self, shader, size, size_factor): #size = grid's length & width = square grid
         self.size = size
         vertices = []
         uv = []
@@ -223,7 +227,7 @@ class Grid(Mesh):
             for y in range (0, size):
                 x = float(x)
                 y = float(y)
-                vertices.append((x*4, 0.0, y*4)) # stretching the mesh -> less computation for the same surface's size
+                vertices.append((x*size_factor, 0.0, y*size_factor)) # stretching the mesh -> less computation for the same surface's size
                 normals.append((0.0, 1.0, 0.0))
                 uv.append((x/(size-1), y/(size-1)))
 
@@ -245,7 +249,7 @@ class Grid(Mesh):
                 indices.append((x+1)*size + y + 1)
         super().__init__(shader, attributes=dict(position=vertices, uv=uv, normal=normals), index=indices)
     
-    def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
+    def draw(self, primitives=GL.GL_TRIANGLES, draw_command=None, **uniforms):
         
-        super().draw(primitives=primitives, size=self.size, **uniforms)
+        super().draw(primitives=primitives, size=self.size, draw_command=draw_command, **uniforms)
 
