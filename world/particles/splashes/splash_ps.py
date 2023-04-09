@@ -13,7 +13,7 @@ class SplashParticleSystem:
         self.nb_particles = 512
 
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)
-        self.positions = [(uniform(-10.0, 10.0), 900.0, uniform(-10.0, 10.0), uniform(25.0, 50.0)) for _ in range(self.nb_particles)]
+        self.positions = [(uniform(-10.0, 10.0), 1370.0, uniform(-10.0, 10.0), uniform(25.0, 50.0)) for _ in range(self.nb_particles)]
 
         
         R = 20.0

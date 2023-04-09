@@ -14,7 +14,7 @@ class SmokeParticleSystem:
         
         sample_chisquared = np.random.noncentral_chisquare(df=1, nonc=0.00001, size=self.nb_particles)
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)
-        self.positions = [(0.0, 900.0, 0.0, sample_chisquared[i]) for i in range(self.nb_particles)]
+        self.positions = [(0.0, 1350.0, 0.0, sample_chisquared[i]) for i in range(self.nb_particles)]
         self.positions = np.asarray(self.positions, dtype=np.float32)
 
         

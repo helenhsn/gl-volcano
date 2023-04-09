@@ -70,18 +70,17 @@ float min (float a, float b) {
 
 
 float volcano(vec2 p, float noise) {
-    float translate = 0.0;
-    vec2 trans = p+translate;
-    vec2 mult = (trans)*(trans);
-    vec2 temp = -mult/(min_spread*25);
+    vec2 mult = p*p;
+    vec2 temp = -mult/(min_spread*35);
     vec2 temp2 = -mult/30.0;
     float value_1 = AMP_HEIGHT*(10.0*exp(temp.x + temp.y) - 30.0*exp(temp2.x + temp2.y));
 
     float f1 = ((length(mult))*0.3-10)+160;
-    float f2 = (abs((length(trans))*0.35)-10)*(length(mult))*0.01+205;
+    float f2 = (abs((length(p))*0.35)-10)*(length(mult))*0.01+205;
     float value_2 = min(f1,f2)  + 280;
 
-    return smin(value_1, value_2, 2) + 150 + noise*1.5;
+
+    return smin(value_1, value_2, 2) + 550 + noise*1.5;
 }
 
 
@@ -94,10 +93,26 @@ float height_terrain(in vec2 p) {
 
 
     float volcano_height = volcano(p, noise);
-    volcano_height = volcano_height*(smoothstep(900.0, 0, length(p)) + 0.1) + 250;
+    volcano_height = volcano_height*(smoothstep(1100.0, 0, length(p)) + 0.1) + 250;
 
-    volcano_height *= clamp_factor;
-    return volcano_height;
+    // adding little rusty zones to reduce symmetry
+    vec2 temp3 = -(p-1100.)*(p-1100.0)/(min_spread*120.0);
+    float value_3 = AMP_HEIGHT*10.*exp(temp3.x + temp3.y) + noise;
+
+    vec2 p_temp5 = vec2(p.x + 350, p.y -900.0);
+    vec2 temp5 = -p_temp5 * p_temp5/(min_spread*30.0);
+    float value_5 = AMP_HEIGHT*6.*exp(temp5.x + temp5.y) + noise*0.7;
+
+    vec2 p_temp4 = vec2(p.x+50, p.y + 500.0);
+    vec2 temp4 = -p_temp4*p_temp4/(min_spread*30.0);
+    float value_4 = AMP_HEIGHT*18.*exp(temp4.x + temp4.y) + noise;
+
+    value_5 = smin(value_3, value_5, -50.0);
+    value_4 = smin(value_4, value_5, -50.0);
+    value_4 = smin(value_4, volcano_height, -50.0);
+
+    float final_height = value_4 * clamp_factor;
+    return final_height;
 }
 
 

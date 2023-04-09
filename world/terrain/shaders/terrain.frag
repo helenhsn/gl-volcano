@@ -35,7 +35,7 @@ void main() {
     vec3 specular = spec * light_col;
 
 
-    out_color.rgb = specular*0.4 + (ambient*0.5 + diffuse) * IN.albedo;
+    out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * IN.albedo;
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }
     
