@@ -31,7 +31,7 @@ class Ocean:
         self.t = t
         self.fft.update(t, self.ocean_grid)
 
-    def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
+    def draw(self, primitives=GL.GL_TRIANGLES, skybox=None, **uniforms):
 
         # binding updated textures 
         self.grid.shader.bind()
@@ -40,6 +40,10 @@ class Ocean:
 
         GL.glActiveTexture(GL.GL_TEXTURE1)
         GL.glBindTexture(self.ocean_grid.gradients_text.type, self.ocean_grid.gradients_text.glid)
+
+        GL.glActiveTexture(GL.GL_TEXTURE2)
+        GL.glBindTexture(skybox.type, skybox.glid)
         self.grid.shader.set_int("displacement", 0)
         self.grid.shader.set_int("gradients", 1)
+        self.grid.shader.set_int("skybox", 2)
         self.grid.draw(primitives=primitives, wind_speed=self.ocean_grid.wind_speed, t = self.t, wind_dir=self.ocean_grid.wind_direction, draw_command=GL.glDrawElementsInstanced,**uniforms)

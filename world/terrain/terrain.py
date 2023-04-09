@@ -20,14 +20,17 @@ class Terrain:
                 index = i* self.twoN + j
                 self.maps[index] = self.get_map(model_matrices[index], cs)
 
-    def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
+    def draw(self, primitives=GL.GL_TRIANGLES, skybox=None,**uniforms):
         for i in range (-self.N, self.N):
             for j in range (-self.N, self.N):
                 index = i* self.twoN + j
                 GL.glActiveTexture(GL.GL_TEXTURE0)
                 GL.glBindTexture(self.maps[index].type, self.maps[index].glid)
+                GL.glActiveTexture(GL.GL_TEXTURE1)
+                GL.glBindTexture(skybox.type, skybox.glid)
                 self.grid.shader.bind()
                 self.grid.shader.set_int("map", 0)
+                self.grid.shader.set_int("skybox", 1)
                 self.grid.draw(primitives=primitives, model=self.model_matrices[index], **uniforms)
 
 

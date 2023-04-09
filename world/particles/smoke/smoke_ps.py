@@ -10,7 +10,7 @@ from math import pi, sin, cos
 class SmokeParticleSystem:
     def __init__(self):
 
-        self.nb_particles = 32768
+        self.nb_particles = 16384
         
         sample_chisquared = np.random.noncentral_chisquare(df=1, nonc=0.00001, size=self.nb_particles)
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)

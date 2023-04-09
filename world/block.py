@@ -24,6 +24,6 @@ class Chunk:
     def update(self, t):
         self.ocean_mesh.update(t)
     
-    def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
-        self.ocean_mesh.draw(primitives=primitives, **uniforms)
-        self.terrain_mesh.draw(primitives=primitives,  **uniforms)
+    def draw(self, primitives=GL.GL_TRIANGLES, skybox=None, **uniforms):
+        self.ocean_mesh.draw(primitives=primitives, skybox=skybox,**uniforms)
+        self.terrain_mesh.draw(primitives=primitives, skybox=skybox, **uniforms)

@@ -7,12 +7,11 @@ in VS_OUTPUT {
     vec3 albedo;
 } IN;
 
-const vec3 light_pos = vec3(-5000.0, 5000.0, -5000.0);
+const vec3 light_pos = vec3(5000.0, 5000.0, -5000.0);
 const vec3 light_col = vec3(1.);
 const vec3 ambient_light = vec3(0.2196, 0.5922, 0.7059);
 
 uniform vec3 w_camera_position;
-
 
 out vec4 out_color;
 
@@ -34,6 +33,7 @@ void main() {
     // specular light
     float spec = pow(max(dot(n, h), 0.0), 32);
     vec3 specular = spec * light_col;
+
 
     out_color.rgb = specular*0.4 + (ambient*0.5 + diffuse) * IN.albedo;
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction

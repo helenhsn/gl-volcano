@@ -288,7 +288,7 @@ class Viewer(Node):
 
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos)
+                        w_camera_position=self.camera.camera_pos, skybox=self.skybox.cubemap_text)
 
 
             # skybox (optimization)

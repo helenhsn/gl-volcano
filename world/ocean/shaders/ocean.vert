@@ -118,6 +118,8 @@ vec3 get_perlin_normal(vec2 p, vec3 perlinFrequency, vec3 perlinAmplitude) {
     return n;
 }
 
+// removing tiling effect due to the repetition of the same ocean texture
+// to use if framerate allows it...
 void tiling(inout vec3 d, inout vec3 n, vec3 p) {
     vec3 v = w_camera_position - p;
     float v_length = length(v);
@@ -143,7 +145,7 @@ out VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
-    mat4 col;
+    vec3 col;
 
 } OUTPUT;
 
@@ -156,9 +158,9 @@ void main() {
     vec3 grad = texture(gradients, Uv).xzy;
 
     OUTPUT.uv = uv;
-    vec3 n = grad;
+    vec3 n = get_normal(grad);
     // removing tiling effect
-    tiling(d, n, (model*vec4(position, 1.)).xyz);
+    //tiling(d, n, (model*vec4(position, 1.)).xyz);
     vec3 new_pos = position + d;
 
     vec3 world_pos = (model * vec4(new_pos, 1.)).xyz;
@@ -170,6 +172,6 @@ void main() {
 
     OUTPUT.position = blend_height(world_pos, clamp_factor);
     OUTPUT.normal = blend_normal(n, clamp_factor);
-    OUTPUT.col = model;
+    OUTPUT.col = OUTPUT.position;
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
 }
