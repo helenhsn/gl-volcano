@@ -2,7 +2,7 @@
     "rdocCaptureSettings": 1,
     "settings": {
         "autoStart": false,
-        "commandLine": "/home/helen/Documents/2A_Ensimag/S2/3D_Graphics/Project/viewer.py",
+        "commandLine": "/home/cyriane/Documents/Ensimag/2A/S2/Graphique3D/gl-volcano/main.py",
         "environment": [
         ],
         "executable": "/bin/python3",
@@ -22,6 +22,6 @@
             "verifyBufferAccess": false
         },
         "queuedFrameCap": 0,
-        "workingDir": "/home/helen/Documents/2A_Ensimag/S2/3D_Graphics/Project/"
+        "workingDir": "/home/cyriane/Documents/Ensimag/2A/S2/Graphique3D/gl-volcano"
     }
 }

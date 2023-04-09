@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Python OpenGL practical application.
+Python OpenGL tree maker.
 """
 
 import sys                          # for system arguments
@@ -20,7 +20,9 @@ FACTOR = 0.9
 
 
 def make_tree(cos, sin):
-    from core import Node
+    from core import Node, vec
+    from utils.transform import quaternion, quaternion_from_euler
+    from utils.animation import KeyFrameControlNode
 
     """ Creates the bottom of the tree with 3 sections """
     facteur = 2
@@ -39,6 +41,14 @@ def make_tree(cos, sin):
     
     shader = Shader(vertex_source="world/tree/shaders/tree.vert", fragment_source="world/tree/shaders/tree.frag")
     cylinder = Cylinder(shader, 10, 2, 1/2, 1, cos, sin)
+    # La direction du vent c'est 1.0, 0.0, 1.0 au fait haha
+
+    translate_keys = {0: vec(0, 0, 0), 2: vec(1, 1, 0), 4: vec(0, 0, 0)}
+    rotate_keys = {0: quaternion(), 2: quaternion(),
+                   3: quaternion_from_euler(15, 0, 15), 4: quaternion()}
+    scale_keys = {0: 1, 2: 0.5, 4: 1}
+    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys)
+
 
     #on crée 3 cylindres pour la base de l'arbre et on les met tous sur l'axe 0:
     base_shape = Node(transform=translate(0, b, 0) @ scale(a, b, a) @ rotate(no_axis, no_angle))
@@ -95,8 +105,8 @@ def make_tree(cos, sin):
     tree_rec2(1, cylinder, translate(0, 4*b, 0), seventh_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
     tree_rec2(1, cylinder, translate(0, 4*b, 0), eigth_tree, rotate(no_axis, no_angle), 0, size, largeur_branche*epaisseur, 0.8, angle)
     
-    
-    return base_transform
+    keynode.add(base_transform)
+    return keynode
 
 def tree_rec2(occurence, shape, translation_parent, adding_support, rotation_parent, angle_parent, size, radius, factor, angle):
     from core import Node

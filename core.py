@@ -54,6 +54,21 @@ class Cylinder(Node):
         super().__init__()
         self.add(*load('cylinder.obj', shader))  # just load cylinder from file
 
+class Capybara(Node):
+    """ Very simple capybara based on provided load function """
+    def __init__(self, shader):
+        from core import load
+        super().__init__()
+        self.add(*load('world/animals/capybara.obj', shader))  # just load capy from file
+
+class Koala(Node):
+    """ Very simple capybara based on provided load function """
+    def __init__(self, shader):
+        from core import load
+        super().__init__()
+        self.add(*load('world/animals/koala.obj', shader)) #tex_file='textures/koala.jpg'))  # just load capy from file
+
+
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
 
@@ -99,7 +114,7 @@ def load(file, shader, tex_file=None, **params):
         else:
             tfile = None
         if Texture is not None and tfile:
-            mat.properties['diffuse_map'] = Texture(tex_file=tfile)
+            mat.properties['diffuse_map'] = Texture(path_img=tfile)
 
     # ----- load animations
     def conv(assimp_keys, ticks_per_second):
@@ -197,11 +212,14 @@ def load(file, shader, tex_file=None, **params):
     return [root_node]
 
 
+
 # ------------  Viewer class & window management ------------------------------
 class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
 
     def __init__(self, width=1500, height=1000, size=128):
+        from utils.shaders import Shader
+        from utils.transform import translate, rotate
         super().__init__()
 
         # initialize and automatically terminate glfw on exit
@@ -264,7 +282,17 @@ class Viewer(Node):
         # trees
         cosines, sines = init_cos_sin(10)
         self.trees = [make_tree(cosines, sines)]
-        self.trees = move_tree(self.trees, [(900.0, 280.0, 900.0)])
+        self.trees = move_tree(self.trees, [(0.0, -10.0, -30.0)])
+
+        # initially empty list of object to draw
+        shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
+        self.capybara = Capybara(shader_for_animals)
+        node_koala = Node(transform= rotate((0,1,0), 180) @ rotate((0,1,0), 90) @ rotate((1,0,0), -90)@rotate((1,1,0), 180))
+        node_koala.add(Koala(shader_for_animals))
+        self.koala = node_koala
+        
+        self.drawables = []
+
 
     def run(self):
         """ Main render loop for this OpenGL window """
@@ -286,28 +314,35 @@ class Viewer(Node):
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
 
-            self.chunk.draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos, skybox=self.skybox.cubemap_text)
+            # self.chunk.draw(view=view_matrix,
+            #             projection=projection_matrix,
+            #             w_camera_position=self.camera.camera_pos)
 
 
             # skybox (optimization)
             # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
-            GL.glDepthFunc(GL.GL_LEQUAL)
-            GL.glDisable(GL.GL_CULL_FACE)
-            self.skybox.draw(view=view_matrix, proj=projection_matrix)
-            GL.glEnable(GL.GL_CULL_FACE)
-            GL.glDepthFunc(GL.GL_LESS)
+            # GL.glDepthFunc(GL.GL_LEQUAL)
+            # GL.glDisable(GL.GL_CULL_FACE)
+            # self.skybox.draw(view=view_matrix, proj=projection_matrix)
+            # GL.glEnable(GL.GL_CULL_FACE)
+            # GL.glDepthFunc(GL.GL_LESS)
 
-            # transparent objects
-            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            GL.glBlendEquation(GL.GL_FUNC_ADD)
-            GL.glDepthMask(GL.GL_FALSE)
-            self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
-            self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
-            GL.glDepthMask(GL.GL_TRUE)
-            GL.glDisable(GL.GL_BLEND)  
+            # # transparent objects
+            # GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            # GL.glBlendEquation(GL.GL_FUNC_ADD)
+            # GL.glDepthMask(GL.GL_FALSE)
+            # self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+            # self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
+            # GL.glDepthMask(GL.GL_TRUE)
+            # GL.glDisable(GL.GL_BLEND)  
 
+            #objects we loaded in our scene
+            GL.glDisable(GL.GL_DEPTH_TEST) 
+            self.draw(view=view_matrix,
+                      projection=projection_matrix,
+                      w_camera_position=self.camera.camera_pos)
+            GL.glEnable(GL.GL_DEPTH_TEST) 
+            
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
 
@@ -317,8 +352,8 @@ class Viewer(Node):
             GL.glClearColor(0.3, 0.4, 0.6, 0.1)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-    def on_key(self, _win, key, _scancode, action, _mods):
 
+    def on_key(self, _win, key, _scancode, action, _mods):
         """ 'Q' or 'Escape' quits """
         if action == glfw.PRESS or action == glfw.REPEAT:
             if key == glfw.KEY_ESCAPE:
@@ -326,10 +361,23 @@ class Viewer(Node):
 
             if key == glfw.KEY_P: #wireframe mode
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
+            if key == glfw.KEY_C:
+                print("CAPYBARAAAAAA")
+                self.add(self.capybara)
+            if key == glfw.KEY_K:
+                print("KOALA")
+                self.add(self.koala)
             self.camera.handle_keys(key, action, self.delta_time)
 
             # call Node.key_handler which calls key_handlers for all drawables
             self.key_handler(key)
+
+            
+    def add(self, *drawables):
+        """ Add drawables to this node, simply updating children list """
+        self.children.extend(drawables)
+
+
 
     def on_mouse_move(self, win, xpos, ypos):
         if self.mouse_move:

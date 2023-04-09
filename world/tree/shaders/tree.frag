@@ -23,7 +23,7 @@ void main() {
    // vec3 h = normalize(l + v); //halfway vector
 
     //color
-    vec3 tree_color = vec3(0.0, 0.40, 0.0);
+    vec3 tree_color = vec3(0.60, 0.40, 0.17);
 
     // ambient light
     vec3 ambient = 0.4 * ambient_light;
@@ -35,7 +35,7 @@ void main() {
     out_color = vec4(n, 1);
     //out_color = vec4(out_normal, 1);
     //out_color = vec4(tree_color, 1);
-    out_color.rgb = n;//(ambient*0.5 + diffuse) * tree_color;
+    out_color.rgb = out_normal+tree_color;//(ambient*0.5 + diffuse) * tree_color;
     //out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
     //out_color = vec4(out_normal,1);
 }
