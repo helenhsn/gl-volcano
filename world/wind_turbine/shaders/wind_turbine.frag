@@ -7,7 +7,7 @@ in VS_OUTPUT {
     vec3 normal;
 } IN;
 
-const vec3 light_pos = vec3(-5000.0, 5000.0, -5000.0);
+const vec3 light_pos = vec3(5000.0, 5000.0, -5000.0);
 const vec3 light_col = vec3(1.);
 const vec3 ambient_light = vec3(0.2196, 0.5922, 0.7059);
 
@@ -35,10 +35,9 @@ void main() {
     vec3 diffuse = dif * light_col;
 
     // specular light
-    float spec = pow(max(dot(n, h), 0.0), 32);
+    float spec = pow(max(dot(n, h), 0.0), 500);
     vec3 specular = spec * light_col;
 
-    //out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * turbine_color;
-    out_color.rgb = diffuse ;
-    //out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
+    out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * turbine_color;
+    out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }

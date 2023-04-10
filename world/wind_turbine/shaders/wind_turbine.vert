@@ -23,8 +23,8 @@ out VS_OUTPUT {
 
 void main() {
     // initialize interpolated colors at vertices
-    OUT.normal = (model * vec4(normal, 1)).xyz;
-    OUT.position = position;
+    OUT.normal = (model * vec4(normal, 0)).xyz;
+    OUT.position = (model * vec4(position, 1)).xyz;
     // tell OpenGL how to transform the vertex to clip coordinates
     gl_Position = projection * view * model * vec4(position, 1);
 }

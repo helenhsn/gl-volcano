@@ -19,6 +19,7 @@ from world.block import Chunk
 from world.skybox.skybox import Skybox
 from world.tree.tree import make_tree, move_tree
 from world.wind_turbine.wind_turbine import make_turbine
+from utils.primitives import Cylinder
 
 import os
 import OpenGL.GL as GL
@@ -48,13 +49,6 @@ class Node:
         """ Dispatch keyboard events to children with key handler """
         for child in (c for c in self.children if hasattr(c, 'key_handler')):
             child.key_handler(key)
-
-
-class Cylinder(Node):
-    """ Very simple cylinder based on provided load function """
-    def __init__(self, shader):
-        super().__init__()
-        self.add(*load('cylinder.obj', shader))  # just load cylinder from file
 
 class Animal(Node):
     """ Animal based on provided load function """
@@ -228,7 +222,7 @@ class Viewer(Node):
 
     def __init__(self, width=1500, height=1000, size=128):
         from utils.shaders import Shader
-        from utils.transform import translate, rotate
+        from utils.transform import translate, rotate, scale
         super().__init__()
 
         # initialize and automatically terminate glfw on exit
@@ -295,8 +289,14 @@ class Viewer(Node):
 
         # animals pen
         self.pen = Pen()
-        
+        self.add(self.pen.fences)
 
+
+        # noeud = Node(transform=translate(-1300, 400, 400) )
+        # self.noeud = noeud
+        # shader = Shader(vertex_source="world/wind_turbine/shaders/wind_turbine.vert", fragment_source="world/wind_turbine/shaders/wind_turbine.frag")
+        # cylinder = Cylinder(shader, 10, 2, 1, 1, cosines, sines)
+        # noeud.add(cylinder) 
         # wind turbine
         move_turbine = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), -70))
         move_turbine.add(make_turbine(cosines, sines))
@@ -310,12 +310,19 @@ class Viewer(Node):
         rotate_keys = {0: quaternion(), 2: quaternion(), 3: quaternion(), 4: quaternion()}
         scale_keys = {0: 1, 2: 1, 4: 1}
         keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=2)
-
         shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
-        node_koala = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), 180) @ rotate((0, 1 ,0), -90) @ rotate((1, 0, 0), -90))
-        node_koala.add(Animal(shader_for_animals, 'world/animals/koala.obj'))
+
+        koala = Animal(shader_for_animals, 'world/animals/koala.obj')
+        node_koala = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90) @ rotate((1, 0, 0), -90))
+        node_koala.add(koala)
         keynode.add(node_koala)
         self.koala = keynode
+        other_koala = Node(transform=translate(0, 0, 0) @ rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90) @ rotate((1, 0, 0), -90))
+        other_koala.add(koala)
+        #self.add(other_koala)
+       
+        # initially empty list of object to draw
+        self.drawables = []
 
 
     def run(self):
@@ -332,7 +339,9 @@ class Viewer(Node):
             view_matrix = self.camera.view_matrix()
             projection_matrix = self.camera.projection_matrix(win_size)
             
-
+            # self.noeud.draw(view=view_matrix,
+            #             projection=projection_matrix,
+            #             w_camera_position=self.camera.camera_pos)
             # opaque objects
             self.turbine.draw(view=view_matrix,
                         projection=projection_matrix,
@@ -367,13 +376,13 @@ class Viewer(Node):
             GL.glDepthFunc(GL.GL_LESS)
 
             # # transparent objects
-            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            GL.glBlendEquation(GL.GL_FUNC_ADD)
-            GL.glDepthMask(GL.GL_FALSE)
-            self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
-            self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
-            GL.glDepthMask(GL.GL_TRUE)
-            GL.glDisable(GL.GL_BLEND)  
+            # GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            # GL.glBlendEquation(GL.GL_FUNC_ADD)
+            # GL.glDepthMask(GL.GL_FALSE)
+            # self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+            # self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
+            # GL.glDepthMask(GL.GL_TRUE)
+            # GL.glDisable(GL.GL_BLEND)  
 
             
             # flush render commands, and swap draw buffers
@@ -396,7 +405,6 @@ class Viewer(Node):
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
             if key == glfw.KEY_K: # make spawn koala by pressing a button
                 self.add(self.koala)
-                number_koala += 1
 
             self.camera.handle_keys(key, action, self.delta_time)
 

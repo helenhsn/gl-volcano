@@ -174,7 +174,7 @@ class Cylinder(Mesh):
         for j in range(2):
             h = height/2 - height * j
             a = 1/2 - 1*j
-            position.append((0, h+h/3, 0))
+            position.append((0, h, 0))
             normal.append((0, a, 0))
 
         self.position = np.array((position), 'f')

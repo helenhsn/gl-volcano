@@ -15,7 +15,8 @@ from utils.transform import translate, rotate, scale, sincos
 from utils.primitives import Cylinder
 from utils.shaders import Shader
 
-SEUIL = 0.5
+
+SEUIL = 10
 FACTOR = 0.9
 
 
@@ -25,13 +26,14 @@ def make_tree(cos, sin):
     from utils.animation import KeyFrameControlNode
 
     """ Creates the bottom of the tree with 3 sections """
-    facteur = 2
-    d = 0.30 *facteur
+    facteur = 50
+    facteur_tronc = 10
+    d = 0.30 *facteur_tronc
     epaisseur = 0.6
-    a = 0.40*d*epaisseur*facteur
-    b = 1*d*facteur
-    c = 0.25*d*epaisseur*facteur
-    e = 0.40*d*epaisseur*facteur
+    a = 0.40*d*epaisseur*facteur_tronc
+    b = 1*d*facteur_tronc
+    c = 0.25*d*epaisseur*facteur_tronc
+    e = 0.40*d*epaisseur*facteur_tronc
 
     angle = 70
     size = 0.7*facteur
@@ -43,11 +45,12 @@ def make_tree(cos, sin):
     cylinder = Cylinder(shader, 10, 2, 1/2, 1, cos, sin)
     # La direction du vent c'est 1.0, 0.0, 1.0 au fait haha
 
+    # animation of the tree
     translate_keys = {0: vec(0, 0, 0), 2: vec(1, 1, 0), 4: vec(0, 0, 0)}
     rotate_keys = {0: quaternion(), 2: quaternion(),
                    3: quaternion_from_euler(15, 0, 15), 4: quaternion()}
-    scale_keys = {0: 1, 2: 0.5, 4: 1}
-    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys)
+    scale_keys = {0: 1, 2: 1, 4: 1}
+    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=4 )
 
 
     #on crée 3 cylindres pour la base de l'arbre et on les met tous sur l'axe 0:
