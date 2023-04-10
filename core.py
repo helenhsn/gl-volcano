@@ -54,20 +54,12 @@ class Cylinder(Node):
         super().__init__()
         self.add(*load('cylinder.obj', shader))  # just load cylinder from file
 
-class Capybara(Node):
+class Animal(Node):
     """ Very simple capybara based on provided load function """
-    def __init__(self, shader):
+    def __init__(self, shader, path_obj):
         from core import load
         super().__init__()
-        self.add(*load('world/animals/capybara.obj', shader))  # just load capy from file
-
-class Koala(Node):
-    """ Very simple capybara based on provided load function """
-    def __init__(self, shader):
-        from core import load
-        super().__init__()
-        self.add(*load('world/animals/koala.obj', shader)) #tex_file='textures/koala.jpg'))  # just load capy from file
-
+        self.add(*load(path_obj, shader))  # just load capy from file
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
@@ -285,11 +277,11 @@ class Viewer(Node):
         self.trees = move_tree(self.trees, [(0.0, -10.0, -30.0)])
 
         # initially empty list of object to draw
-        shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
-        self.capybara = Capybara(shader_for_animals)
-        node_koala = Node(transform= rotate((0,1,0), 180) @ rotate((0,1,0), 90) @ rotate((1,0,0), -90)@rotate((1,1,0), 180))
-        node_koala.add(Koala(shader_for_animals))
-        self.koala = node_koala
+        # shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
+
+        # node_koala = Node(transform= rotate((0,1,0), 180) @ rotate((0,1,0), 90) @ rotate((1,0,0), -90)@rotate((1,1,0), 180))
+        # node_koala.add(Animal(shader_for_animals, "world/animals/catn0.obj"))
+        # self.koala = node_koala
         
         self.drawables = []
 
@@ -314,34 +306,33 @@ class Viewer(Node):
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
 
-            # self.chunk.draw(view=view_matrix,
-            #             projection=projection_matrix,
-            #             w_camera_position=self.camera.camera_pos)
-
-
-            # skybox (optimization)
-            # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
-            # GL.glDepthFunc(GL.GL_LEQUAL)
-            # GL.glDisable(GL.GL_CULL_FACE)
-            # self.skybox.draw(view=view_matrix, proj=projection_matrix)
-            # GL.glEnable(GL.GL_CULL_FACE)
-            # GL.glDepthFunc(GL.GL_LESS)
-
-            # # transparent objects
-            # GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            # GL.glBlendEquation(GL.GL_FUNC_ADD)
-            # GL.glDepthMask(GL.GL_FALSE)
-            # self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
-            # self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
-            # GL.glDepthMask(GL.GL_TRUE)
-            # GL.glDisable(GL.GL_BLEND)  
+            self.chunk.draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos,
+                        skybox=self.skybox.cubemap_text)
 
             #objects we loaded in our scene
-            GL.glDisable(GL.GL_DEPTH_TEST) 
-            self.draw(view=view_matrix,
-                      projection=projection_matrix,
-                      w_camera_position=self.camera.camera_pos)
-            GL.glEnable(GL.GL_DEPTH_TEST) 
+            # self.draw(view=view_matrix,
+            #           projection=projection_matrix,
+            #           w_camera_position=self.camera.camera_pos)
+            
+            # skybox (optimization)
+            # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
+            GL.glDepthFunc(GL.GL_LEQUAL)
+            GL.glDisable(GL.GL_CULL_FACE)
+            self.skybox.draw(view=view_matrix, proj=projection_matrix)
+            GL.glEnable(GL.GL_CULL_FACE)
+            GL.glDepthFunc(GL.GL_LESS)
+
+            # # transparent objects
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            GL.glBlendEquation(GL.GL_FUNC_ADD)
+            GL.glDepthMask(GL.GL_FALSE)
+            self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+            self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
+            GL.glDepthMask(GL.GL_TRUE)
+            GL.glDisable(GL.GL_BLEND)  
+
             
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
