@@ -1,8 +1,7 @@
 #version 330 core
+in vec2 frag_tex_coords;
 
 uniform sampler2D diffuse_map;
-uniform sampler2D second_texture;
-in vec2 frag_tex_coords;
 out vec4 out_color;
 
 void main() {

@@ -44,7 +44,7 @@ class OceanGrid:
         k = vec(0.0, 0.0)
         half = self.N/2
 
-        N_plus_1 = 256 + 1
+        N_plus_1 = self.N + 1
         h0 = []
         for m in range(0,N_plus_1):
             k[1] = TWO_PI * (half - m) / self.L

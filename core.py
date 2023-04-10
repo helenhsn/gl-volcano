@@ -8,11 +8,12 @@ import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 import assimpcy
-from utils.primitives import Mesh, init_cos_sin # 3D resource loader
+from utils.primitives import Mesh, init_cos_sin
+from utils.shaders import Shader # 3D resource loader
 
 
 # our transform functions
-from utils.transform import Trackball, identity, vec, translate
+from utils.transform import Trackball, identity, scale, vec, translate
 from utils.camera import Camera
 from world.block import Chunk
 from world.skybox.skybox import Skybox
@@ -56,11 +57,23 @@ class Cylinder(Node):
         self.add(*load('cylinder.obj', shader))  # just load cylinder from file
 
 class Animal(Node):
-    """ Very simple animal based on provided load function """
+    """ Animal based on provided load function """
     def __init__(self, shader, path_obj):
-        from core import load
         super().__init__()
         self.add(*load(path_obj, shader))  # just load capy from file
+
+class Fence(Node):
+    """ Fence based on provided load function """
+    def __init__(self, shader):
+        super().__init__()
+        self.add(*load('world/pen/13078_Wooden_Post_and_Rail_Fence_v1_l3.obj', shader))  # just load capy from file
+
+class Pen:
+    def __init__(self):
+        self.fences = Node(transform=translate((-1100, 420, 600)) @ scale(3000, 203, 1000))
+        self.fences.add(Fence(shader=Shader(vertex_source="world/pen/shaders/pen.vert", fragment_source="world/pen/shaders/pen.frag")))
+    def draw(self, model=identity(), **other_uniforms):
+        self.fences.draw(model=model, other_uniforms=other_uniforms)
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
@@ -209,7 +222,6 @@ def load(file, shader, tex_file=None, **params):
     return [root_node]
 
 
-
 # ------------  Viewer class & window management ------------------------------
 class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
@@ -278,8 +290,12 @@ class Viewer(Node):
 
         # tree
         cosines, sines = init_cos_sin(10)
-        self.trees = [make_tree(cosines, sines)]
-        #self.trees = move_tree(self.trees, [(-1300, 320, 400)])
+        # self.trees = [make_tree(cosines, sines)]
+        # self.trees = move_tree(self.trees, [(-460.0, 330.0, 1100.0)])
+
+        # animals pen
+        self.pen = Pen()
+        
 
         # wind turbine
         move_turbine = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), -70))
@@ -300,9 +316,6 @@ class Viewer(Node):
         node_koala.add(Animal(shader_for_animals, 'world/animals/koala.obj'))
         keynode.add(node_koala)
         self.koala = keynode
-       
-        # initially empty list of object to draw
-        self.drawables = []
 
 
     def run(self):
@@ -328,15 +341,18 @@ class Viewer(Node):
             # self.trees[0].draw(view=view_matrix,
             #             projection=projection_matrix,
             #             w_camera_position=self.camera.camera_pos)
+            
 
-            self.chunk.draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos,
-                        skybox=self.skybox.cubemap_text)
+            # self.chunk.draw(view=view_matrix,
+            #             projection=projection_matrix,
+            #             w_camera_position=self.camera.camera_pos,
+            #             skybox=self.skybox.cubemap_text)
 
             # objects we loaded in our scene
             # animals have a different cull face than all the other objects so we change that parameter before changing it again after drawing all animals
             GL.glCullFace(GL.GL_BACK)
+            self.pen.draw(view=view_matrix,
+                        projection=projection_matrix)
             self.draw(view=view_matrix,
                       projection=projection_matrix,
                       w_camera_position=self.camera.camera_pos)
