@@ -14,14 +14,17 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // interpolated color for fragment shader, intialized at vertices
-out vec3 fragment_color;
-out vec3 out_normal;
-out mat4 out_model;
+
+out VS_OUTPUT {
+    vec3 position;
+    vec3 normal;
+} OUT;
+
 
 void main() {
     // initialize interpolated colors at vertices
-    out_normal = (model * vec4(normal, 1)).xyz;
-
+    OUT.normal = (model * vec4(normal, 1)).xyz;
+    OUT.position = position;
     // tell OpenGL how to transform the vertex to clip coordinates
     gl_Position = projection * view * model * vec4(position, 1);
 }

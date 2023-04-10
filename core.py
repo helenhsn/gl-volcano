@@ -325,9 +325,9 @@ class Viewer(Node):
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
             
-            self.trees[0].draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos)
+            # self.trees[0].draw(view=view_matrix,
+            #             projection=projection_matrix,
+            #             w_camera_position=self.camera.camera_pos)
 
             self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,

@@ -33,7 +33,7 @@ def make_turbine(cos, sin):
     
     # initialize the cylinder used
     shader = Shader(vertex_source="world/wind_turbine/shaders/wind_turbine.vert", fragment_source="world/wind_turbine/shaders/wind_turbine.frag")
-    cylinder = Cylinder(shader, 10, 2, 2/3, 1, cos, sin)
+    cylinder = Cylinder(shader, 10, 2, 1, 1, cos, sin)
 
     #creation of the three parts
     list_shapes = []
@@ -70,7 +70,7 @@ def make_turbine(cos, sin):
 def blades(radius, adding_support, size, shader, cos, sin):
     from core import Node
     """ Creates the blades of the turbine"""
-    cylinder = Cylinder(shader, 10, 2, 1/7, 1, cos, sin)
+    cylinder = Cylinder(shader, 10, 2, 1, 1, cos, sin)
     radius_x = size/20
     radius_y = size/5
     angles = [0, 120, -120]

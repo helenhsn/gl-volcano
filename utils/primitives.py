@@ -139,7 +139,7 @@ class Cylinder(Mesh):
         normal = []
         index = []
         
-        #lateral faces 
+        #lateral faces
         for i in range(slices):
             counter = 2*i
             index.append(((counter+2)%(2*slices), counter, counter+1))
@@ -151,12 +151,7 @@ class Cylinder(Mesh):
                 normal.append((cosines[i], 0, sines[i]))
         
         #add again all points
-        for i in range(slices):
-            counter = 2*i
-            for j in range(2):
-                h = height/2 - height * j
-                position.append((cosines[i] * radiuses[j], h, sines[i] * radiuses[j]))
-        
+
         for i in range(slices-1):
             counter = 2*i
             for j in range(2):
@@ -180,7 +175,6 @@ class Cylinder(Mesh):
             h = height/2 - height * j
             a = 1/2 - 1*j
             position.append((0, h+h/3, 0))
-
             normal.append((0, a, 0))
 
         self.position = np.array((position), 'f')
