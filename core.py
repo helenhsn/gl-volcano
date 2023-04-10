@@ -17,6 +17,7 @@ from utils.camera import Camera
 from world.block import Chunk
 from world.skybox.skybox import Skybox
 from world.tree.tree import make_tree, move_tree
+from world.wind_turbine.wind_turbine import make_turbine
 
 import os
 import OpenGL.GL as GL
@@ -55,7 +56,7 @@ class Cylinder(Node):
         self.add(*load('cylinder.obj', shader))  # just load cylinder from file
 
 class Animal(Node):
-    """ Very simple capybara based on provided load function """
+    """ Very simple animal based on provided load function """
     def __init__(self, shader, path_obj):
         from core import load
         super().__init__()
@@ -63,6 +64,10 @@ class Animal(Node):
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
+MAX_KOALA = 10
+global number_koala
+global positions_koala
+
 
 # optionally load texture module
 try:
@@ -268,21 +273,35 @@ class Viewer(Node):
         self.chunk = Chunk(size, 4, N=4)
 
         # particle system init
-        self.splash_ps = SplashParticleSystem()   
+        self.splash_ps = SplashParticleSystem()
         self.smoke_ps = SmokeParticleSystem()
 
-        # trees
+        # tree
         cosines, sines = init_cos_sin(10)
         self.trees = [make_tree(cosines, sines)]
-        self.trees = move_tree(self.trees, [(0.0, -10.0, -30.0)])
+        #self.trees = move_tree(self.trees, [(-1300, 320, 400)])
 
-        # initially empty list of object to draw
-        # shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
+        # wind turbine
+        move_turbine = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), -70))
+        move_turbine.add(make_turbine(cosines, sines))
+        self.turbine = move_turbine
 
-        # node_koala = Node(transform= rotate((0,1,0), 180) @ rotate((0,1,0), 90) @ rotate((1,0,0), -90)@rotate((1,1,0), 180))
-        # node_koala.add(Animal(shader_for_animals, "world/animals/catn0.obj"))
-        # self.koala = node_koala
+        # initialize the koala
+        # animation of the tree
+        from utils.transform import quaternion
         
+        translate_keys = {0: vec(0, 0, 0), 2: vec(0, 15, 0), 3: vec(0, 0, 0)}
+        rotate_keys = {0: quaternion(), 2: quaternion(), 3: quaternion(), 4: quaternion()}
+        scale_keys = {0: 1, 2: 1, 4: 1}
+        keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=2)
+
+        shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
+        node_koala = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), 180) @ rotate((0, 1 ,0), -90) @ rotate((1, 0, 0), -90))
+        node_koala.add(Animal(shader_for_animals, 'world/animals/koala.obj'))
+        keynode.add(node_koala)
+        self.koala = keynode
+       
+        # initially empty list of object to draw
         self.drawables = []
 
 
@@ -302,6 +321,10 @@ class Viewer(Node):
             
 
             # opaque objects
+            self.turbine.draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos)
+            
             self.trees[0].draw(view=view_matrix,
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
@@ -311,10 +334,13 @@ class Viewer(Node):
                         w_camera_position=self.camera.camera_pos,
                         skybox=self.skybox.cubemap_text)
 
-            #objects we loaded in our scene
-            # self.draw(view=view_matrix,
-            #           projection=projection_matrix,
-            #           w_camera_position=self.camera.camera_pos)
+            # objects we loaded in our scene
+            # animals have a different cull face than all the other objects so we change that parameter before changing it again after drawing all animals
+            GL.glCullFace(GL.GL_BACK)
+            self.draw(view=view_matrix,
+                      projection=projection_matrix,
+                      w_camera_position=self.camera.camera_pos)
+            GL.glCullFace(GL.GL_FRONT)
             
             # skybox (optimization)
             # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
@@ -352,12 +378,10 @@ class Viewer(Node):
 
             if key == glfw.KEY_P: #wireframe mode
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
-            if key == glfw.KEY_C:
-                print("CAPYBARAAAAAA")
-                self.add(self.capybara)
-            if key == glfw.KEY_K:
-                print("KOALA")
+            if key == glfw.KEY_K: # make spawn koala by pressing a button
                 self.add(self.koala)
+                number_koala += 1
+
             self.camera.handle_keys(key, action, self.delta_time)
 
             # call Node.key_handler which calls key_handlers for all drawables

@@ -58,13 +58,18 @@ class TransformKeyFrames:
 
 class KeyFrameControlNode(Node):
     """ Place node with transform keys above a controlled subtree """
-    def __init__(self, trans_keys, rot_keys, scale_keys, transform=identity()):
+    def __init__(self, trans_keys, rot_keys, scale_keys, transform=identity(), modulo=None):
         super().__init__(transform=transform)
         self.keyframes = TransformKeyFrames(trans_keys, rot_keys, scale_keys)
+        self.modulo = modulo
 
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms):
         """ When redraw requested, interpolate our node transform from keys """
-        self.transform = self.keyframes.value(glfw.get_time())
+        # we can repeat an animation
+        if(self.modulo != None):
+            self.transform = self.keyframes.value(glfw.get_time()%self.modulo)
+        else:
+            self.transform = self.keyframes.value(glfw.get_time())
         super().draw(primitives=primitives, **uniforms)
 
 
