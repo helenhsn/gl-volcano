@@ -72,8 +72,10 @@ class Pen:
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
 MAX_KOALA = 10
-global number_koala
-global positions_koala
+
+
+number_koala = 0
+positions_koala = []
 
 
 # optionally load texture module
@@ -283,27 +285,27 @@ class Viewer(Node):
         self.smoke_ps = SmokeParticleSystem()
 
         # tree
+        # initialise the angles we will use for the cylinders
         cosines, sines = init_cos_sin(10)
-        # self.trees = [make_tree(cosines, sines)]
-        # self.trees = move_tree(self.trees, [(-460.0, 330.0, 1100.0)])
+        self.tree = [make_tree(cosines, sines)]
+        self.tree = move_tree(self.tree, [(1200.0, 300.0, 0.0)])[0]
 
         # animals pen
         self.pen = Pen()
         self.add(self.pen.fences)
 
 
-        # noeud = Node(transform=translate(-1300, 400, 400) )
-        # self.noeud = noeud
-        # shader = Shader(vertex_source="world/wind_turbine/shaders/wind_turbine.vert", fragment_source="world/wind_turbine/shaders/wind_turbine.frag")
-        # cylinder = Cylinder(shader, 10, 2, 1, 1, cosines, sines)
-        # noeud.add(cylinder) 
         # wind turbine
-        move_turbine = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), -70))
-        move_turbine.add(make_turbine(cosines, sines))
-        self.turbine = move_turbine
+        turbine = make_turbine(cosines, sines)
+        translations_wind_turbine = [(-1300, 300, 400), (-1000, 300, 300), (-1300, 300, 600), (-900, 300, 800), (-700, 300, 800)]
+        self.turbine = []
+        # we move manually each turbine in order to make the scene look good
+        for translation in translations_wind_turbine:
+            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -40))
+            move_turbine.add(turbine)
+            self.turbine.append(move_turbine)
 
         # initialize the koala
-        # animation of the tree
         from utils.transform import quaternion
         
         translate_keys = {0: vec(0, 0, 0), 2: vec(0, 15, 0), 3: vec(0, 0, 0)}
@@ -343,19 +345,22 @@ class Viewer(Node):
             #             projection=projection_matrix,
             #             w_camera_position=self.camera.camera_pos)
             # opaque objects
-            self.turbine.draw(view=view_matrix,
+
+            # wind turbine
+            for turbine in self.turbine:
+                turbine.draw(view=view_matrix,
                         projection=projection_matrix,
                         w_camera_position=self.camera.camera_pos)
             
-            # self.trees[0].draw(view=view_matrix,
-            #             projection=projection_matrix,
-            #             w_camera_position=self.camera.camera_pos)
+            self.tree.draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos)
             
 
-            # self.chunk.draw(view=view_matrix,
-            #             projection=projection_matrix,
-            #             w_camera_position=self.camera.camera_pos,
-            #             skybox=self.skybox.cubemap_text)
+            self.chunk.draw(view=view_matrix,
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos,
+                        skybox=self.skybox.cubemap_text)
 
             # objects we loaded in our scene
             # animals have a different cull face than all the other objects so we change that parameter before changing it again after drawing all animals
@@ -375,14 +380,14 @@ class Viewer(Node):
             GL.glEnable(GL.GL_CULL_FACE)
             GL.glDepthFunc(GL.GL_LESS)
 
-            # # transparent objects
-            # GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            # GL.glBlendEquation(GL.GL_FUNC_ADD)
-            # GL.glDepthMask(GL.GL_FALSE)
-            # self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
-            # self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
-            # GL.glDepthMask(GL.GL_TRUE)
-            # GL.glDisable(GL.GL_BLEND)  
+            # transparent objects
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+            GL.glBlendEquation(GL.GL_FUNC_ADD)
+            GL.glDepthMask(GL.GL_FALSE)
+            self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+            self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
+            GL.glDepthMask(GL.GL_TRUE)
+            GL.glDisable(GL.GL_BLEND)  
 
             
             # flush render commands, and swap draw buffers

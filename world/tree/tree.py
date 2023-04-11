@@ -16,20 +16,19 @@ from utils.primitives import Cylinder
 from utils.shaders import Shader
 
 
-SEUIL = 10
+SEUIL = 20
 FACTOR = 0.9
 
 
 def make_tree(cos, sin):
     from core import Node, vec
-    from utils.transform import quaternion, quaternion_from_euler
+    from utils.transform import quaternion_from_axis_angle
     from utils.animation import KeyFrameControlNode
-
     """ Creates the bottom of the tree with 3 sections """
-    facteur = 50
+    facteur = 60
     facteur_tronc = 10
     d = 0.30 *facteur_tronc
-    epaisseur = 0.6
+    epaisseur = 1
     a = 0.40*d*epaisseur*facteur_tronc
     b = 1*d*facteur_tronc
     c = 0.25*d*epaisseur*facteur_tronc
@@ -47,10 +46,10 @@ def make_tree(cos, sin):
 
     # animation of the tree
     translate_keys = {0: vec(0, 0, 0), 2: vec(1, 1, 0), 4: vec(0, 0, 0)}
-    rotate_keys = {0: quaternion(), 2: quaternion(),
-                   3: quaternion_from_euler(15, 0, 15), 4: quaternion()}
+    rotate_keys = {0: quaternion_from_axis_angle((1, 0, 1), 50),
+                   4: quaternion_from_axis_angle((1, 0, 1), 15)}
     scale_keys = {0: 1, 2: 1, 4: 1}
-    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=4 )
+    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=8)
 
 
     #on crée 3 cylindres pour la base de l'arbre et on les met tous sur l'axe 0:
@@ -69,25 +68,6 @@ def make_tree(cos, sin):
     upper_transform.add(upper_shape)
     middle_transform.add(middle_shape, upper_transform)
     base_transform.add(base_shape, middle_transform)
-
-    #on fait les rotations :
-    # rotation_base = Node(transform=rotate(no_axis, no_angle))
-    # rotation_middle = Node(transform=rotate(no_axis, no_angle))
-    # rotation_upper = Node(transform=rotate(no_axis, no_angle))
-
-    # rotation_base.add(base_shape)
-    # rotation_middle.add(middle_shape)
-    # rotation_upper.add(upper_shape)
-
-    # #on fait les translations nécessaires :
-    # translation_base = Node()
-    # translation_middle = Node(transform=translate(0, b, 0)) #on met le cylindre du milieu au milieu du cylindre d'en bas
-    # translation_upper = Node(transform=translate(0, 1*b, 0)) #on met le cylindre d'en haut au milieu du cylindre du milieu
-
-
-    # translation_base.add(rotation_base, translation_middle)
-    # translation_middle.add(rotation_middle, translation_upper)
-    # translation_upper.add(rotation_upper)
 
     #on crée les branches :
     tree_rec2(1, cylinder, translate(0, 4*b, 0), upper_transform, rotate(no_axis, no_angle), no_angle, size, 0.05*epaisseur, 0.8, angle)
@@ -213,6 +193,43 @@ def tree_rec2(occurence, shape, translation_parent, adding_support, rotation_par
     tree_rec2(occurence+1, shape, translation_2, translation_branche_2, rotation_2, -angle2+angle_parent, size2*factor, radius*factor, factor, angle2)
     
     return adding_support
+
+
+    #        from core import Node
+
+    # """ Creates the branches of the tree (2)"""
+    # if size * factor < SEUIL:
+    #     return 0
+    
+    # if occurence == 1:
+    #     fact = 1
+    # else:
+    #     fact = 2
+    # rotation_tab = [(1, 0, 0), (1, 0, 0), (0, 0, 1), (0, 0, 1), (-1, 0, 1), (1, 0, -1), (1, 0, 1), (-1, 0, -1)]
+    # signs_tab = [1, -1, -1, 1, 1, 1, 1, 1]
+
+    # list_branch = []
+
+    # for i in range(8):
+    #     print(i, len(signs_tab), adding_support)
+    #     size_branch = size * rd.uniform(0.98, 1.02)
+    #     angle_branch = angle * rd.uniform(0.7, 1.0)
+    #     branch_base = Node(transform=translate(0, size_branch, 0) @ scale(radius, size_branch, radius))
+    #     branch_base.add(shape)
+    #     branch_rotation = Node(transform=rotate(rotation_tab[i], fact*angle_branch*signs_tab[i]) @ rotation_parent)
+    #     branch_rotation.add(branch_base)
+    #     branch_translation = Node(transform=translation_parent)
+    #     branch_translation.add(branch_rotation)
+    #     adding_support.add(branch_translation)
+    #     if i == 0 or i == 1:
+    #         translation_to_apply = translate(0, 2*size_branch*sincos(angle_branch+angle_parent)[1], 2*size_branch*sincos(angle_branch+angle_parent)[0])
+    #         rotation_to_apply = rotate(rotation_tab[i], angle_branch*signs_tab[i]) @ rotation_parent
+    #         list_branch.append((branch_translation, translation_to_apply, rotation_to_apply, angle_branch, size_branch))
+    # print(list_branch[1][0])
+    # tree_rec2(occurence+1, shape, list_branch[0][1], list_branch[0][0], list_branch[0][2], list_branch[0][3]+angle_parent, list_branch[0][4]*factor, radius*factor, factor, list_branch[0][3])
+    # tree_rec2(occurence+1, shape, list_branch[1][1], list_branch[1][0], list_branch[1][2], -list_branch[1][3]+angle_parent, list_branch[1][4]*factor, radius*factor, factor, list_branch[1][3])
+    
+    # return adding_support
 
 def move_tree(tree_list, coordinates_list):
     from core import Node

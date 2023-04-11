@@ -25,7 +25,7 @@ void main() {
     vec3 h = normalize(l + v); //halfway vector
 
     //color
-    vec3 turbine_color = vec3(1, 1, 1);
+    vec3 turbine_color = vec3(0.92, 0.98, 0.96);
 
     // ambient light
     vec3 ambient = 0.1 * ambient_light;
@@ -35,9 +35,9 @@ void main() {
     vec3 diffuse = dif * light_col;
 
     // specular light
-    float spec = pow(max(dot(n, h), 0.0), 500);
+    float spec = pow(max(dot(n, h), 0.0), 32);
     vec3 specular = spec * light_col;
 
-    out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * turbine_color;
+    out_color.rgb = specular*0.8 + (ambient*0.5 + diffuse*0.8) * turbine_color;
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }

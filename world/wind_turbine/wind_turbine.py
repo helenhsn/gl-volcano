@@ -27,7 +27,7 @@ def make_turbine(cos, sin):
 
     """ Creates the bottom of the turbine with 3 sections """
     #initialisation of variables we will need
-    sizes = [50, 40, 30, 15]
+    sizes = [70, 60, 50, 30]
     radiuses = [18, 12, 8, 8]
     no_axis = (0, 0, 0)
     
@@ -69,15 +69,15 @@ def make_turbine(cos, sin):
     # matrix_ab[:3,0] = b-a
     # matrix_animation = list_shapes[3].world_transform @ matrix_ab
     blades(radiuses[3], list_shapes[3], sizes[0], shader, cos, sin)
-    # animated part of the turbin
-    translate_keys = {0: vec(0, 0, 0), 2: vec(0, 0, 0), 4: vec(0, 0, 0)}
-    rotate_keys = { 1: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 0), 
-                    2: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 90), 
-                    3: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 180),
-                    4: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 270), 
-                    5: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 0 )}
-    scale_keys = {0: 1, 2: 1, 4: 1}
-    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=4 )
+    
+    # animated part of the turbine
+    translate_keys = {0: vec(0, 0, 0)}
+    rotate_keys = { 0: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 90),
+                    6: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 180),
+                    12: quaternion_from_axis_angle(vect_ab @ list_shapes[3].world_transform, 270),
+                    }
+    scale_keys = {0: 1}
+    keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=12)
     keynode.add(list_shapes[3])
 
    
@@ -86,7 +86,6 @@ def make_turbine(cos, sin):
     list_shapes[3] = new_node
     list_shapes[2].add(new_node)
 
-    
 
     return list_shapes[0]
 
@@ -95,13 +94,14 @@ def blades(radius, adding_support, size, shader, cos, sin):
     """ Creates the blades of the turbine"""
     cylinder = Cylinder(shader, 10, 2, 1/7, 1, cos, sin)
     radius_x = size/20
-    radius_y = size/5
+    radius_z = size/5
     angles = [0, 120, -120]
-    offset = 5
-    vectors = [(1, 0, 1), (0, 1, 0), (0, 1, 0)]
-
+    vector = (0, 1, 0)
     for i in range(len(angles)):
-        blade_part = Node(transform=rotate(vectors[1], 90) @ rotate(vectors[i], angles[i]) @ rotate((1, 0, 1), 90) @ translate(9/10*radius*np.sin(angles[i]), 9/10*radius*np.cos(angles[i]), 0) @ translate(0, size, 0) @ scale(radius_x, size, radius_y))
+        # first we scale the cylinder then we put it at the point (0, 0, 0)
+        # next is moving the blade a little in order to make it more real and put it away from the center of the adding support
+        # and we can move on to the rotations in order to get the angle of the blade and put it perpendicular to the adding support
+        blade_part = Node(transform=rotate(vector, 90) @ rotate(vector, angles[i]) @ rotate((1, 0, 1), 90)@ translate(0, 8/10*radius, 0) @ translate(0, size, 0) @ scale(radius_x, size, radius_z))
         blade_part.add(cylinder)
         adding_support.add(blade_part)
             
