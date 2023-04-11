@@ -16,6 +16,17 @@ uniform vec3 w_camera_position;
 // output fragment color for OpenGL
 out vec4 out_color;
 
+vec3 applyFog( in vec3  rgb,      // original color of the pixel
+               in float dist, // camera to point distance
+               in vec3  rayOri,   // camera position
+               in vec3  rayDir )  // camera to point vector
+{
+    float b = 0.02;
+    float a = 6000.0;
+    float fogAmount = (a/b) * exp(-rayOri.y*b) * (1.0-exp( -dist*rayDir.y*b ))/rayDir.y;
+    vec3  fogColor  = vec3(0.5,0.6,0.7);
+    return mix(rgb, fogColor, fogAmount);
+}
 
 void main() {
     vec3 p = IN.position;

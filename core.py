@@ -13,7 +13,7 @@ from utils.shaders import Shader # 3D resource loader
 
 
 # our transform functions
-from utils.transform import Trackball, identity, scale, vec, translate
+from utils.transform import Trackball, identity, rotate, scale, vec, translate
 from utils.camera import Camera
 from world.block import Chunk
 from world.skybox.skybox import Skybox
@@ -62,12 +62,13 @@ class Fence(Node):
         super().__init__()
         self.add(*load('world/pen/13078_Wooden_Post_and_Rail_Fence_v1_l3.obj', shader))  # just load capy from file
 
-class Pen:
+class Pen(Node):
     def __init__(self):
-        self.fences = Node(transform=translate((-1100, 420, 600)) @ scale(3000, 203, 1000))
-        self.fences.add(Fence(shader=Shader(vertex_source="world/pen/shaders/pen.vert", fragment_source="world/pen/shaders/pen.frag")))
-    def draw(self, model=identity(), **other_uniforms):
-        self.fences.draw(model=model, other_uniforms=other_uniforms)
+        super().__init__()
+        node = Node(transform=translate(-1500, 1500, 600) @ scale(300, 3000, 3000))
+        node.add(Fence(shader=Shader(vertex_source="world/pen/shaders/pen.vert", fragment_source="world/pen/shaders/pen.frag")))
+        self.add(node)
+
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
@@ -290,11 +291,6 @@ class Viewer(Node):
         self.tree = [make_tree(cosines, sines)]
         self.tree = move_tree(self.tree, [(1200.0, 300.0, 0.0)])[0]
 
-        # animals pen
-        self.pen = Pen()
-        self.add(self.pen.fences)
-
-
         # wind turbine
         turbine = make_turbine(cosines, sines)
         translations_wind_turbine = [(-1300, 300, 400), (-1000, 300, 300), (-1300, 300, 600), (-900, 300, 800), (-700, 300, 800)]
@@ -323,8 +319,6 @@ class Viewer(Node):
         other_koala.add(koala)
         #self.add(other_koala)
        
-        # initially empty list of object to draw
-        self.drawables = []
 
 
     def run(self):
@@ -341,9 +335,6 @@ class Viewer(Node):
             view_matrix = self.camera.view_matrix()
             projection_matrix = self.camera.projection_matrix(win_size)
             
-            # self.noeud.draw(view=view_matrix,
-            #             projection=projection_matrix,
-            #             w_camera_position=self.camera.camera_pos)
             # opaque objects
 
             # wind turbine
@@ -364,13 +355,6 @@ class Viewer(Node):
 
             # objects we loaded in our scene
             # animals have a different cull face than all the other objects so we change that parameter before changing it again after drawing all animals
-            GL.glCullFace(GL.GL_BACK)
-            self.pen.draw(view=view_matrix,
-                        projection=projection_matrix)
-            self.draw(view=view_matrix,
-                      projection=projection_matrix,
-                      w_camera_position=self.camera.camera_pos)
-            GL.glCullFace(GL.GL_FRONT)
             
             # skybox (optimization)
             # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
@@ -380,7 +364,7 @@ class Viewer(Node):
             GL.glEnable(GL.GL_CULL_FACE)
             GL.glDepthFunc(GL.GL_LESS)
 
-            # transparent objects
+            # # transparent objects
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendEquation(GL.GL_FUNC_ADD)
             GL.glDepthMask(GL.GL_FALSE)

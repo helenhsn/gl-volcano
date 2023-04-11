@@ -16,9 +16,26 @@ uniform vec3 w_camera_position;
 out vec4 out_color;
 
 
+
+vec3 applyFog( in vec3  rgb,      // original color of the pixel
+               in float dist, // camera to point distance
+               in vec3  rayOri,   // camera position
+               in vec3  rayDir )  // camera to point vector
+{
+    float b = 0.02;
+    float a = 10e5;
+    float fogAmount = (a/b) * exp(-rayOri.y*b) * (1.0-exp( -dist*rayDir.y*b ))/rayDir.y;
+    vec3  fogColor  = vec3(0.5,0.6,0.7);
+    return mix(fogColor, rgb, fogAmount);
+}
+
+
+
+
 void main() {
     vec3 p = IN.position;
-    vec3 v = normalize(w_camera_position - p); // view dir
+    vec3 temp_v = w_camera_position - p;
+    vec3 v = normalize(temp_v); // view dir
     vec3 n = IN.normal;
     vec3 l = normalize(light_pos - p); // light dir
     vec3 h = normalize(l + v); //halfway vector
@@ -36,6 +53,7 @@ void main() {
 
 
     out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * IN.albedo;
+    out_color.rgb = applyFog(out_color.rgb, length(temp_v), w_camera_position, temp_v);
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }
     

@@ -39,6 +39,19 @@ vec3 get_normal(vec3 slope){
     return normalize(slope);
 }
 
+vec3 applyFog( in vec3  rgb,      // original color of the pixel
+               in float dist, // camera to point distance
+               in vec3  rayOri,   // camera position
+               in vec3  rayDir )  // camera to point vector
+{
+    float b = 0.02;
+    float a = 6000.0;
+    float fogAmount = (a/b) * exp(-rayOri.y*b) * (1.0-exp( -dist*rayDir.y*b ))/rayDir.y;
+    vec3  fogColor  = vec3(0.5,0.6,0.7);
+    return mix(rgb, fogColor, fogAmount);
+}
+
+
 
 // ----------------------------------------------------------------------------
 void main()
@@ -94,5 +107,7 @@ void main()
     vec3 color = water_color + spec*0.3;
 
     out_color=vec4(color, 1.);
+    //out_color.rgb = applyFog(out_color.rgb, length(v), w_camera_position, v);
+
     out_color.rgb = pow(out_color.rgb, vec3(1.0/2.2)); // gamma correction
 }

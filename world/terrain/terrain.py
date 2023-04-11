@@ -32,6 +32,7 @@ class Terrain:
                 self.grid.shader.set_int("map", 0)
                 self.grid.shader.set_int("skybox", 1)
                 self.grid.draw(primitives=primitives, model=self.model_matrices[index], **uniforms)
+                GL.glBindTexture(self.maps[index].type, 0)
 
 
     def get_map(self, model, cs):
