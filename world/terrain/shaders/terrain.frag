@@ -5,40 +5,32 @@ in VS_OUTPUT {
     vec2 uv;
     vec3 normal;
     vec3 albedo;
+    float fog_plane_f;
 } IN;
 
 const vec3 light_pos = vec3(5000.0, 5000.0, -5000.0);
 const vec3 light_col = vec3(1.);
 const vec3 ambient_light = vec3(0.2196, 0.5922, 0.7059);
-
 uniform vec3 w_camera_position;
 
 out vec4 out_color;
 
 
-
-vec4 applyFog( in vec4  color,      // original color of the pixel
-               in float dist, // camera to point distance
-               in vec3  rayOri,   // camera position
-               in vec3  rayDir )  // camera to point vector
+vec3 applyFog( in vec3 color,      // original color of the pixel
+               in vec3 view)  // camera to point vector
 {
-    float b = 0.02;
-    float a = 10e5;
-    float fog_maxdist = 3000;
-    float fog_mindist = 1000;
-    vec4  fog_colour = vec4(0.4, 0.4, 0.4, 1.0);
-    float height = 1000;
-    float dist_height = height - rayDir.y;
+    vec3 fog_plane_point = vec3(0., 500., 0.);
+    float dist = length(view);
+    float density = 0.003;
+    float gradient = 2.9;
 
-    // Calculate fog
-    // float dist = length(rayOri.xyz);
-    float fog_factor = (fog_maxdist - dist) / (fog_maxdist - fog_mindist) ;
-    fog_factor = clamp(fog_factor, 0.0, 1.0);
+    float xz_fog = exp(-pow(dist*density, gradient));
+    vec3  fog_color  = vec3(0.4549, 0.5255, 0.6);
 
-    vec4 color_new = mix(fog_colour, color, fog_factor);
-    fog_factor = clamp(fog_factor, 0.0, 0.5);
-    //color_new.y = color.y;
-    return color_new;
+
+    float fog_amount = IN.fog_plane_f * (1.-xz_fog);
+
+    return mix(color, fog_color, fog_amount);
 }
 
 
@@ -109,10 +101,7 @@ void main() {
 
 
     out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * IN.albedo;
-    out_color = applyFog(out_color, length(temp_v), w_camera_position, temp_v);
-    vec4  fog_colour = vec4(0.4, 0.4, 0.4, 1.0);
-    //out_color = mix(fog_colour, out_color, CalcLayeredFogFactor());
-    
+    out_color.rgb = applyFog(out_color.rgb, temp_v);
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }
     

@@ -5,6 +5,7 @@ in VS_OUTPUT {
     vec2 uv;
     vec3 normal;
     vec3 col;
+    float fog_plane_f;
 } IN;
 
 #define PI 3.14159265359
@@ -39,16 +40,20 @@ vec3 get_normal(vec3 slope){
     return normalize(slope);
 }
 
-vec3 applyFog( in vec3  rgb,      // original color of the pixel
-               in float dist, // camera to point distance
-               in vec3  rayOri,   // camera position
-               in vec3  rayDir )  // camera to point vector
+vec3 applyFog( in vec3 color,      // original color of the pixel
+               in vec3 view)  // camera to point vector
 {
-    float b = 0.02;
-    float a = 6000.0;
-    float fogAmount = (a/b) * exp(-rayOri.y*b) * (1.0-exp( -dist*rayDir.y*b ))/rayDir.y;
-    vec3  fogColor  = vec3(0.5,0.6,0.7);
-    return mix(rgb, fogColor, fogAmount);
+    vec3 fog_plane_point = vec3(0., 500., 0.);
+    float dist = length(view);
+    float density = 0.003;
+    float gradient = 2.9;
+
+    float f = smoothstep(0.0, 900.0, view.y);
+    float xz_fog = exp(-pow(dist*density, gradient));
+    vec3  fog_color  = vec3(0.5,0.6,0.7);
+
+    float fog_amount = IN.fog_plane_f * (1.-xz_fog);
+    return mix(color, fog_color, fog_amount);
 }
 
 
@@ -107,7 +112,7 @@ void main()
     vec3 color = water_color + spec*0.3;
 
     out_color=vec4(color, 1.);
-    //out_color.rgb = applyFog(out_color.rgb, length(v), w_camera_position, v);
+    out_color.rgb = applyFog(out_color.rgb, non_normalized_v);
 
     out_color.rgb = pow(out_color.rgb, vec3(1.0/2.2)); // gamma correction
 }

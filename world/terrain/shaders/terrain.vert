@@ -9,6 +9,10 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform int size;
+uniform vec3 w_camera_position;
+
+const vec3 fog_plane_point = vec3(0., 500., 0.);
+
 
 float random(in vec2 uv)
 {
@@ -36,7 +40,7 @@ float noise (in vec2 _st) {
             (d - b) * u.x * u.y;
 }
 
-vec3 albedo_from_height(float height, vec2 p)
+vec3 albedo_from_height(float height)
 {
 
 
@@ -52,13 +56,15 @@ vec3 albedo_from_height(float height, vec2 p)
     {
         float hscaled = clamp((height - 250.0)/100, 0., 1.); //btw 0. && 1.
         vec3 base_color = vec3(0., 0., 1.);
-        float factor = noise(vec2(p)) * 2.0;
         if (hscaled <= 0.08)
             return mix(colors[0], colors[1], hscaled*0.1);
         else
             return mix(colors[1], colors[3],  (hscaled - 0.08)/(1.0-0.08));
-        return base_color;
     }
+}
+
+float fog_from_height(vec3 pos) {
+    return 1. - smoothstep(0,1.5, exp((pos.y-400.0)*0.002));
 }
 
 out VS_OUTPUT {
@@ -66,6 +72,7 @@ out VS_OUTPUT {
     vec2 uv;
     vec3 normal;
     vec3 albedo;
+    float fog_plane_f;
 } OUTPUT;
 
 void main() {
@@ -77,5 +84,6 @@ void main() {
     OUTPUT.position = (model * vec4(pos, 1.)).xyz;
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
     OUTPUT.normal = map_coefs.yzw;
-    OUTPUT.albedo = albedo_from_height(OUTPUT.position.y, OUTPUT.position.xz);
+    OUTPUT.albedo = albedo_from_height(OUTPUT.position.y);
+    OUTPUT.fog_plane_f = fog_from_height(OUTPUT.position);
 }

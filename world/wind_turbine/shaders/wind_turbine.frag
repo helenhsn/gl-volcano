@@ -4,6 +4,7 @@
 in VS_OUTPUT {
     vec3 position;
     vec3 normal;
+    float fog_plane_f;
 } IN;
 
 const vec3 light_pos = vec3(5000.0, 5000.0, -5000.0);
@@ -15,21 +16,29 @@ uniform vec3 w_camera_position;
 // output fragment color for OpenGL
 out vec4 out_color;
 
-vec3 applyFog( in vec3  rgb,      // original color of the pixel
-               in float dist, // camera to point distance
-               in vec3  rayOri,   // camera position
-               in vec3  rayDir )  // camera to point vector
+vec3 applyFog( in vec3 color,      // original color of the pixel
+               in vec3 view)  // camera to point vector
 {
-    float b = 0.02;
-    float a = 6000.0;
-    float fogAmount = (a/b) * exp(-rayOri.y*b) * (1.0-exp( -dist*rayDir.y*b ))/rayDir.y;
-    vec3  fogColor  = vec3(0.5,0.6,0.7);
-    return mix(rgb, fogColor, fogAmount);
+    vec3 fog_plane_point = vec3(0., 500., 0.);
+    float dist = length(view);
+    float density = 0.003;
+    float gradient = 2.9;
+
+    float f = smoothstep(0.0, 900.0, view.y);
+    float xz_fog = exp(-pow(dist*density, gradient));
+    vec3  fog_color  = vec3(0.5,0.6,0.7);
+
+
+    float fog_amount = IN.fog_plane_f * (1.-xz_fog);
+
+    return mix(color, fog_color, fog_amount);
 }
+
 
 void main() {
     vec3 p = IN.position;
-    vec3 v = normalize(w_camera_position - p); // view dir
+    vec3 temp_v = w_camera_position - p;
+    vec3 v = normalize(temp_v); // view dir
     vec3 n = normalize(IN.normal);
     vec3 l = normalize(light_pos - p); // light dir
     vec3 h = normalize(l + v); //halfway vector
@@ -49,5 +58,6 @@ void main() {
     vec3 specular = spec * light_col;
 
     out_color.rgb = specular*0.8 + (ambient*0.5 + diffuse*0.8) * turbine_color;
+    out_color.rgb = applyFog(out_color.rgb, temp_v);
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }
