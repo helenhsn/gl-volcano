@@ -43,7 +43,7 @@ void main() {
     vec3 l = normalize(light_pos - p); // light dir
     vec3 h = normalize(l + v); //halfway vector
 
-    //color
+    // color
     vec3 turbine_color = vec3(0.92, 0.98, 0.96);
 
     // ambient light

@@ -73,7 +73,7 @@ class Pen(Node):
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
-MAX_KOALA = 50
+MAX_KOALA = 12
 
 # optionally load texture module
 try:
@@ -285,7 +285,7 @@ class Viewer(Node):
         # initialise the angles we will use for the cylinders
         cosines, sines = init_cos_sin(10)
         self.tree = [make_tree(cosines, sines)]
-        self.tree = move_tree(self.tree, [(1200.0, 300.0, 0.0)])[0]
+        self.tree = move_tree(self.tree, [(1100.0, 310.0, 0.0)])[0]
 
         # wind turbine init
         turbine = make_turbine(cosines, sines)
@@ -331,7 +331,7 @@ class Viewer(Node):
             self.add(node_koala)
 
         self.number_koala = 0
-        self.pos_koala = {"x": [-700, 100], "y": [320], "z": [1100, 1200]}
+        self.pos_koala = {"x": [-700, 150], "y": [320], "z": [1000, 1300]}
 
 
         print("""\n\n\n############### UTILISATION DU CLAVIER ###############
@@ -352,6 +352,7 @@ class Viewer(Node):
         - 1ère fois : affiche la scène uniquement avec des triangles, 
         - 2ème fois : affiche uniquement les sommets des objets de la scène, 
         - 3ème fois : retour à l'affichage classique
+    - C : changer de point de vue, passer du mode caméra au sol au mode caméra en l'air puis inversement.
     - Echap : quitte la scène
 ######################################################""")
 
@@ -403,7 +404,7 @@ class Viewer(Node):
             GL.glEnable(GL.GL_CULL_FACE)
             GL.glDepthFunc(GL.GL_LESS)
 
-            # # transparent objects
+            # transparent objects
             GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
             GL.glBlendEquation(GL.GL_FUNC_ADD)
             GL.glDepthMask(GL.GL_FALSE)

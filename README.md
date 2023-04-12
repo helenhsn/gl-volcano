@@ -7,7 +7,7 @@ Hélène HASSAN - Cyriane PINAT
 
 ## Description de la scène
 - Tout d'abord le terrain est généré procédurallement, entièrement sur GPU afin d'améliorer les performances. 
-- Les éoliennes sont des éléments hiérarchiques basés sur des cylindres générés entièrement procéduralement en code Python. Une animation y est mise avec des keyframes afin de faire bouger les pales d'une manière réaliste. 
+- Les éoliennes sont des éléments hiérarchiques basés sur des cylindres générés entièrement procéduralement en code Python. Une animation y est mise avec des keyframes afin de faire bouger les pales d'une manière réaliste. Un arbre est créé de la même manière et les parties animées sont le tronc et toutes les branches terminales.
 - La scène est éclairée par le soleil et une lumière ambiante.
 - Un léger brouillard s'amplifie avec la distance afin d'avoir un rendu agréable à l'oeil. 
 - La skybox est présente et est infinie.
@@ -35,11 +35,21 @@ Hélène HASSAN - Cyriane PINAT
 
 Notez que lorsqu'on bouge la caméra jusqu'à 90° vers le haut ou vers le bas, la caméra se bloque. On peut facilement imaginer que la personne qui tient la caméra (si elle existe !) ne va pas se casser le cou et marcher comme une araignée afin d'avoir une caméra retournée. Non. Le plus logique est qu'elle se bloque.
 
+Ces effets sont également possibles à l'aide de la souris, cliquez sur la scène et la caméra bougera avec le pointeur !
+
 
 ### Autres effets
 - K : faire apparaître un koala
 - P : 
   - 1ère fois : affiche la scène uniquement avec des triangles, 
   - 2ème fois : affiche uniquement les sommets des objets de la scène, 
-  - 3ème fois : retour à l'affichage classique
+  - 3ème fois : retour à l'affichage classique.
+- C : changer de point de vue, passer du mode caméra au sol au mode caméra en l'air puis inversement.
 - Echap : quitte la scène
+
+
+### Optimisations 
+
+Nous avons décidé de modifier un peu le code donné à l'origine afin d'améliorer nos performances. 
+Aussi, les cylindres que nous créons sont créés à l'aide des indices des triangles. En effet, au lieu d'ajouter à chaque fois trois sommets pour créer un triangle (donc ajouter 6 fois (pour les points qui ne sont pas les centres des deux cercles) chaque sommet), nous ajoutons 2 fois toutes les positions puis les indices font le reste du travail. 
+

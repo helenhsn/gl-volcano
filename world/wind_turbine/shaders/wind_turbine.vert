@@ -13,7 +13,6 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-// interpolated color for fragment shader, intialized at vertices
 
 out VS_OUTPUT {
     vec3 position;

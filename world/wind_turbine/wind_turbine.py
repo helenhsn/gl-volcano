@@ -85,7 +85,7 @@ def blades(radius, adding_support, size, shader, cos, sin):
         # next is moving the blade a little in order to make it more real and put it away from
         # the center of the adding support and we can move on to the rotations in order to get
         # the angle of the blade and put it perpendicular to the adding support
-        blade_part = Node(transform=rotate(vector, 90) @ rotate(vector, angles[i]) @ rotate((1, 0, 1), 90) @ translate(0, 8/10*radius, 0) @ translate(radius, size, -radius) @ scale(radius_x, size, radius_z))
+        blade_part = Node(transform=rotate(vector, angles[i]) @ rotate((1, 0, 1), 90) @ rotate((0, 1, 0), 30) @ translate(0, 8/10*radius, radius) @ translate(radius, size, -radius) @ scale(radius_x, size, radius_z))
         blade_part.add(cylinder)
         adding_support.add(blade_part)
 

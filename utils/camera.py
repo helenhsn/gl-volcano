@@ -3,7 +3,10 @@ from utils.transform import *
 from math import cos, sin, pi
 class Camera:
     def __init__(self):
-        self.camera_pos = vec(0.0, 800.0, 2000.0)
+        self.camera_pos = vec(0.0, 800.0, 2000.0) # current camera po
+        self.camera_pos_before = vec(0.0, 800.0, 2000.0)
+        self.pitch_before = 0
+        self.yaw_before = 90
         self.world_up = vec(0.0, 1.0, 0.0)
         self.up = vec(0.0, 1.0, 0.0)
         self.rgt = vec(0.0, 0.0, 0.0)
@@ -85,6 +88,18 @@ class Camera:
             if self.pitch - 5 > - 90:
                 self.pitch -= 5
                 self.update_vectors()
+
+        if (key == glfw.KEY_C and (action == glfw.REPEAT or action == glfw.PRESS)):
+            temp_cam = self.camera_pos
+            temp_pit = self.pitch
+            temp_yaw = self.yaw
+            self.camera_pos = self.camera_pos_before
+            self.pitch = self.pitch_before
+            self.yaw = self.yaw_before
+            self.camera_pos_before = temp_cam
+            self.pitch_before = temp_pit
+            self.yaw_before = temp_yaw
+            self.update_vectors()
 
     def handle_mouse_movement(self, offset_x, offset_y):
 
