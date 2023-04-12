@@ -21,7 +21,7 @@ class Ocean:
         self.ssbo = GL.glGenBuffers(1)
         GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, self.ssbo)
         self.model_matrices = model_matrices
-        print(self.model_matrices)
+        # print(self.model_matrices)
         GL.glBufferData(GL.GL_SHADER_STORAGE_BUFFER, self.model_matrices.nbytes, self.model_matrices, GL.GL_STATIC_DRAW)
         GL.glBindBufferBase(GL.GL_SHADER_STORAGE_BUFFER, 8, self.ssbo)
 

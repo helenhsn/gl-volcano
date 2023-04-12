@@ -22,7 +22,7 @@ out VS_OUTPUT {
 
 
 void main() {
-    // initialize interpolated colors at vertices
+    // tell OpenGL how to transform the normal and the position given the model matrix
     OUT.normal = (model * vec4(normal, 0)).xyz;
     OUT.position = (model * vec4(position, 1)).xyz;
     // tell OpenGL how to transform the vertex to clip coordinates

@@ -10,6 +10,7 @@ import numpy as np                  # all matrix manipulations & OpenGL args
 import assimpcy
 from utils.primitives import Mesh, init_cos_sin
 from utils.shaders import Shader # 3D resource loader
+from random import randint
 
 
 # our transform functions
@@ -72,12 +73,7 @@ class Pen(Node):
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
-MAX_KOALA = 10
-
-
-number_koala = 0
-positions_koala = []
-
+MAX_KOALA = 50
 
 # optionally load texture module
 try:
@@ -285,40 +281,79 @@ class Viewer(Node):
         self.splash_ps = SplashParticleSystem()
         self.smoke_ps = SmokeParticleSystem()
 
-        # tree
+        # tree init
         # initialise the angles we will use for the cylinders
         cosines, sines = init_cos_sin(10)
         self.tree = [make_tree(cosines, sines)]
         self.tree = move_tree(self.tree, [(1200.0, 300.0, 0.0)])[0]
 
-        # wind turbine
+        # wind turbine init
         turbine = make_turbine(cosines, sines)
         translations_wind_turbine = [(-1300, 300, 400), (-1000, 300, 300), (-1300, 300, 600), (-900, 300, 800), (-700, 300, 800)]
         self.turbine = []
         # we move manually each turbine in order to make the scene look good
         for translation in translations_wind_turbine:
-            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -40))
+            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -220)) # they face the wind
             move_turbine.add(turbine)
             self.turbine.append(move_turbine)
 
-        # initialize the koala
-        from utils.transform import quaternion
+        # initialize the koalas
+        from utils.transform import quaternion_from_axis_angle
         
-        translate_keys = {0: vec(0, 0, 0), 2: vec(0, 15, 0), 3: vec(0, 0, 0)}
-        rotate_keys = {0: quaternion(), 2: quaternion(), 3: quaternion(), 4: quaternion()}
-        scale_keys = {0: 1, 2: 1, 4: 1}
-        keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=2)
+        # animate all koalas, they just do a yoyo effect
+        translate_keys = {0: vec(0, 0, 0), 2: vec(0, 0, 0), 3: vec(0, 0, 0)}
+        rotate_keys = {0: quaternion_from_axis_angle((1, 0, 1), 0),
+                       2: quaternion_from_axis_angle((1, 0, 1), 15),
+                       4: quaternion_from_axis_angle((1, 0, 1), 0),
+                       6: quaternion_from_axis_angle((1, 0, 1), -15),
+                       8: quaternion_from_axis_angle((1, 0, 1), 0)}
+        scale_keys = {0: 1, 1: 0.95, 2: 1, 4: 1.05, 6: 1} # they also breathe a lot
+        keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=8)
         shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
 
+        # we load a Koala and we save it when it is correctly turned
         koala = Animal(shader_for_animals, 'world/animals/koala.obj')
-        node_koala = Node(transform=translate(-1300, 320, 400) @ rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90) @ rotate((1, 0, 0), -90))
-        node_koala.add(koala)
-        keynode.add(node_koala)
-        self.koala = keynode
-        other_koala = Node(transform=translate(0, 0, 0) @ rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90) @ rotate((1, 0, 0), -90))
-        other_koala.add(koala)
-        #self.add(other_koala)
-       
+        keynode.add(koala)
+        rotated_koala = Node(transform=rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90) @ rotate((1, 0, 0), -90))
+        rotated_koala.add(keynode)
+        self.koala = rotated_koala
+
+        # we add each koala to the scene
+        positions_koalas = [((-1200, 320, 500), 40),
+                            ((-1100, 320, 500), 80),
+                            ((-1000, 320, 400), 120),
+                            ((-1100, 320, 700), 203),
+                            ((-1200, 320, 720), 280),
+                            ((-1050, 320, 500), 340)]
+        for pos, angle in positions_koalas:
+            node_koala = Node(transform=translate(pos) @ rotate((0, 1, 0), angle))
+            node_koala.add(rotated_koala)
+            self.add(node_koala)
+
+        self.number_koala = 0
+        self.pos_koala = {"x": [-700, 100], "y": [320], "z": [1100, 1200]}
+
+
+        print("""\n\n\n############### UTILISATION DU CLAVIER ###############
+    - Z : avancer dans la direction pointée par la caméra
+    - S : reculer (idem)
+    - Q : aller à gauche (sur le code on voit qu'il faut appuyer A mais le clavier par défaut est un clavier QWERTY)
+    - D : aller à droite
+    - Espace : monter
+    - Backspace : descendre
+
+    - Flèche du haut : tourne la caméra vers le haut (selon l'axe z)
+    - Flèche du bas : tourne la caméra vers le bas (selon l'axe z)
+    - Flèche de gauche : tourne la caméra vers la gauche (i.e. dans le sens antihoraire selon l'axe y)
+    - Flèche de droite : tourne la caméra vers la droite (i.e.sens horaire) 
+
+    - K : faire apparaître un koala
+    - P : 
+        - 1ère fois : affiche la scène uniquement avec des triangles, 
+        - 2ème fois : affiche uniquement les sommets des objets de la scène, 
+        - 3ème fois : retour à l'affichage classique
+    - Echap : quitte la scène
+######################################################""")
 
 
     def run(self):
@@ -336,8 +371,6 @@ class Viewer(Node):
             projection_matrix = self.camera.projection_matrix(win_size)
             
             # opaque objects
-
-            # wind turbine
             for turbine in self.turbine:
                 turbine.draw(view=view_matrix,
                         projection=projection_matrix,
@@ -354,8 +387,14 @@ class Viewer(Node):
                         skybox=self.skybox.cubemap_text)
 
             # objects we loaded in our scene
-            # animals have a different cull face than all the other objects so we change that parameter before changing it again after drawing all animals
-            
+            # animals and other objects have a different cull face than all the other objects 
+            # so we change that parameter before changing it again after drawing all animals
+            GL.glCullFace(GL.GL_BACK)
+            self.draw(view=view_matrix,
+                      projection=projection_matrix,
+                      w_camera_position=self.camera.camera_pos)
+            GL.glCullFace(GL.GL_FRONT)
+
             # skybox (optimization)
             # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
             GL.glDepthFunc(GL.GL_LEQUAL)
@@ -371,9 +410,8 @@ class Viewer(Node):
             self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
             self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
             GL.glDepthMask(GL.GL_TRUE)
-            GL.glDisable(GL.GL_BLEND)  
+            GL.glDisable(GL.GL_BLEND)
 
-            
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
 
@@ -392,8 +430,20 @@ class Viewer(Node):
 
             if key == glfw.KEY_P: #wireframe mode
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
-            if key == glfw.KEY_K: # make spawn koala by pressing a button
-                self.add(self.koala)
+            
+            if key == glfw.KEY_K:  # a koala appears randomly by pressing a button
+                if self.number_koala < MAX_KOALA:
+                    # random position
+                    x = randint(self.pos_koala["x"][0], self.pos_koala["x"][1])
+                    y = self.pos_koala["y"][0]
+                    z = randint(self.pos_koala["z"][0], self.pos_koala["z"][1])
+                    # random rotation 
+                    transform_koala = Node(transform=translate(x, y, z) @ rotate((0, 1, 0), randint(0, 360)))
+                    transform_koala.add(self.koala)
+                    self.add(transform_koala)
+                    self.number_koala += 1
+                else: 
+                    print("Please, don't let koalas destroy humanity...")
 
             self.camera.handle_keys(key, action, self.delta_time)
 

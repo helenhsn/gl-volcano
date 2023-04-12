@@ -17,17 +17,73 @@ out vec4 out_color;
 
 
 
-vec3 applyFog( in vec3  rgb,      // original color of the pixel
+vec4 applyFog( in vec4  color,      // original color of the pixel
                in float dist, // camera to point distance
                in vec3  rayOri,   // camera position
                in vec3  rayDir )  // camera to point vector
 {
     float b = 0.02;
     float a = 10e5;
-    float fogAmount = (a/b) * exp(-rayOri.y*b) * (1.0-exp( -dist*rayDir.y*b ))/rayDir.y;
-    vec3  fogColor  = vec3(0.5,0.6,0.7);
-    return mix(fogColor, rgb, fogAmount);
+    float fog_maxdist = 3000;
+    float fog_mindist = 1000;
+    vec4  fog_colour = vec4(0.4, 0.4, 0.4, 1.0);
+    float height = 1000;
+    float dist_height = height - rayDir.y;
+
+    // Calculate fog
+    // float dist = length(rayOri.xyz);
+    float fog_factor = (fog_maxdist - dist) / (fog_maxdist - fog_mindist) ;
+    fog_factor = clamp(fog_factor, 0.0, 1.0);
+
+    vec4 color_new = mix(fog_colour, color, fog_factor);
+    fog_factor = clamp(fog_factor, 0.0, 0.5);
+    //color_new.y = color.y;
+    return color_new;
 }
+
+
+float CalcLayeredFogFactor(){
+    float gFogEnd = 0.1;
+    float gLayeredFogTop = 1000;
+
+    vec3 CameraProj = w_camera_position;
+    CameraProj.y = 0.0;
+
+    vec3 PixelProj = IN.position;
+    PixelProj.y = 0.0; 
+
+    float DeltaD = clamp(length(CameraProj - PixelProj), 0.0, 1.0);
+
+    float DeltaY = 0.0;
+    float DensityIntegral = 0.0;
+
+    if (w_camera_position.y > gLayeredFogTop){
+        if (IN.position.y <  gLayeredFogTop){
+            DeltaY = (gLayeredFogTop - IN.position.y);
+            DensityIntegral = DeltaY * DeltaY * 0.5;
+        }
+    } else {
+        if (IN.position.y < gLayeredFogTop){
+            DeltaY = abs(w_camera_position.y - IN.position.y)/gLayeredFogTop;
+            float DeltaCamera = (gLayeredFogTop - w_camera_position.y) / gLayeredFogTop;
+            float DensityCamera = DeltaCamera * DeltaCamera * 0.5;
+            float DeltaPixel = (gLayeredFogTop - IN.position.y) / gLayeredFogTop;
+            float DensityPixel = DeltaPixel * DeltaPixel * 0.5;
+            DensityIntegral = abs(DensityCamera - DensityPixel);
+        } else {
+            DeltaY = (gLayeredFogTop - IN.position.y) / gLayeredFogTop;
+            DensityIntegral = DeltaY * DeltaY * 0.5;
+        }
+    }
+    float fogDensity = 0.0;
+
+    if (DeltaY != 0){
+        fogDensity = (sqrt(1.0 + ((DeltaD / DeltaY) * (DeltaD / DeltaY)))) * DensityIntegral;
+    }
+
+    return exp(-fogDensity);
+}
+
 
 
 
@@ -53,7 +109,10 @@ void main() {
 
 
     out_color.rgb = specular*0.1 + (ambient*0.5 + diffuse) * IN.albedo;
-    out_color.rgb = applyFog(out_color.rgb, length(temp_v), w_camera_position, temp_v);
+    out_color = applyFog(out_color, length(temp_v), w_camera_position, temp_v);
+    vec4  fog_colour = vec4(0.4, 0.4, 0.4, 1.0);
+    //out_color = mix(fog_colour, out_color, CalcLayeredFogFactor());
+    
     out_color = vec4(pow(out_color.rgb, vec3(1.0/2.2)), 1); // gamma correction
 }
     

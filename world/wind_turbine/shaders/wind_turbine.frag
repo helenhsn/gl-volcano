@@ -1,7 +1,6 @@
 #version 330 core
 
-// receiving interpolated color and normal for fragment shader
-
+// receiving interpolated position and normal for fragment shader
 in VS_OUTPUT {
     vec3 position;
     vec3 normal;

@@ -63,7 +63,7 @@ class SmokeParticleSystem:
             self.buffers[name] = GL.glGenBuffers(1)
             GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, self.buffers[name])
 
-            print(f"size bytes = {data.nbytes} && stride = {data.itemsize}")
+            # print(f"size bytes = {data.nbytes} && stride = {data.itemsize}")
             GL.glBufferData(GL.GL_SHADER_STORAGE_BUFFER, data.nbytes, data, GL.GL_DYNAMIC_DRAW)
             GL.glBindBufferBase(GL.GL_SHADER_STORAGE_BUFFER, buffer_count, self.buffers[name])
             

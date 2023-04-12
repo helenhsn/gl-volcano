@@ -3,7 +3,7 @@ from utils.transform import *
 from math import cos, sin, pi
 class Camera:
     def __init__(self):
-        self.camera_pos = vec(0.0, 800.0, 1000.0)
+        self.camera_pos = vec(0.0, 800.0, 2000.0)
         self.world_up = vec(0.0, 1.0, 0.0)
         self.up = vec(0.0, 1.0, 0.0)
         self.rgt = vec(0.0, 0.0, 0.0)
@@ -54,20 +54,38 @@ class Camera:
             self.camera_pos += self.fwd * speed
 
         if (key == glfw.KEY_S and (action == glfw.REPEAT or action == glfw.PRESS)):
-
             self.camera_pos -= self.fwd * speed
-        
-        if (key == glfw.KEY_A and (action == glfw.REPEAT or action == glfw.PRESS)):
 
+        if (key == glfw.KEY_A and (action == glfw.REPEAT or action == glfw.PRESS)): 
             self.camera_pos -= self.rgt * speed
-        
-        if (key == glfw.KEY_D and (action == glfw.REPEAT or action == glfw.PRESS)):
 
+        if (key == glfw.KEY_D and (action == glfw.REPEAT or action == glfw.PRESS)):
             self.camera_pos += self.rgt * speed
 
         if (key == glfw.KEY_SPACE and (action == glfw.REPEAT or action == glfw.PRESS)):
             self.camera_pos += self.world_up * speed
-            
+
+        if (key == glfw.KEY_BACKSPACE and (action == glfw.REPEAT or action == glfw.PRESS)):
+            self.camera_pos -= self.world_up * speed
+
+        if (key == glfw.KEY_RIGHT and (action == glfw.REPEAT or action == glfw.PRESS)):
+            self.yaw -= 5
+            self.update_vectors()
+
+        if (key == glfw.KEY_LEFT and (action == glfw.REPEAT or action == glfw.PRESS)):
+            self.yaw += 5
+            self.update_vectors()
+
+        if (key == glfw.KEY_UP and (action == glfw.REPEAT or action == glfw.PRESS)):
+            if self.pitch + 5 < 90:
+                self.pitch += 5
+                self.update_vectors()
+
+        if (key == glfw.KEY_DOWN and (action == glfw.REPEAT or action == glfw.PRESS)):
+            if self.pitch - 5 > - 90:
+                self.pitch -= 5
+                self.update_vectors()
+
     def handle_mouse_movement(self, offset_x, offset_y):
 
         self.pitch += (offset_y * self.sensitivity)
