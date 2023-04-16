@@ -4,8 +4,6 @@ in VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
-    vec3 col;
-    float fog_plane_f;
 } IN;
 
 #define PI 3.14159265359
@@ -14,8 +12,9 @@ in VS_OUTPUT {
 uniform sampler2D gradients;
 uniform samplerCube skybox;
 uniform vec3 w_camera_position;
+uniform vec3 light_pos;
 
-const vec3 light_pos = vec3(10000.0, 10000.0, -10000.0);
+
 const vec3 deep_blue=vec3(0.0039, 0.0353, 0.1725);
 const vec3 light_blue = vec3(0.0706, 0.1216, 0.1922);
 
@@ -40,22 +39,6 @@ vec3 get_normal(vec3 slope){
     return normalize(slope);
 }
 
-vec3 applyFog( in vec3 color,      // original color of the pixel
-               in vec3 view)  // camera to point vector
-{
-    vec3 fog_plane_point = vec3(0., 500., 0.);
-    float dist = length(view);
-    float density = 0.003;
-    float gradient = 2.9;
-
-    float f = smoothstep(0.0, 900.0, view.y);
-    float xz_fog = exp(-pow(dist*density, gradient));
-    vec3  fog_color  = vec3(0.5,0.6,0.7);
-
-    float fog_amount = IN.fog_plane_f * (1.-xz_fog);
-    return mix(color, fog_color, fog_amount);
-}
-
 
 
 // ----------------------------------------------------------------------------
@@ -74,23 +57,6 @@ void main()
     // lighting
     float F=fresnel(n, l);
 
-
-    // light from the sun (Ward anisotropic model)
-    const float rho_s   = 0.2;
-    const float ax    = 0.25;
-    const float ay    = 0.1;
-
-    // anisotropic directions
-    // vec3 x = cross(l, n);
-    // vec3 y = cross(x, n);
-
-    // float factor = (1./(4*PI) * rho_s / (ax * ay * sqrt(max(1e-5, dot(l, n) * dot(v, n)))));
-    // float hdotx = dot(h, x) / ax;
-    // float hdoty = dot(h, y) / ay;
-    // float hdotn = dot(h, n);
-    // float specular =  factor * exp(-2.0 * ((hdotx * hdotx) + (hdoty * hdoty)) / (1+hdotn * hdotn));
-    // vec3 spec = specular*vec3(1.);
-
     float spec = pow(max(dot(n, h), 0.0), 128);
     vec3 specular = spec * vec3(1.);
 
@@ -99,7 +65,7 @@ void main()
 
     // reflection
     vec3 reflc = reflect(-v, n);
-    vec3 reflected_color = texture(skybox, reflc).rgb;
+    vec3 reflected_color = pow(texture(skybox, reflc).rgb * vec3(0.1725, 0.1725, 0.1725), vec3(1./2.2));
 
     // refraction -> not really necessary as we don't have a ground underwater
     // float descartes = 1.0/1.33;
@@ -109,10 +75,9 @@ void main()
 	water_color = mix(water_color,  reflected_color * color_mod, smoothstep(-200.0, 200.0, F));
     
     // reflection
-    vec3 color = water_color + spec*0.3;
+    vec3 color = water_color + spec*0.1;
 
     out_color=vec4(color, 1.);
-    out_color.rgb = applyFog(out_color.rgb, non_normalized_v);
 
     out_color.rgb = pow(out_color.rgb, vec3(1.0/2.2)); // gamma correction
 }

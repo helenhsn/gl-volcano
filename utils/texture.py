@@ -20,18 +20,25 @@ class Texture:
     def __del__(self):  # delete GL texture from GPU when object dies
         GL.glDeleteTextures(self.glid)
 
-    def __init__(self, dimensions=(0.0, 0.0), wrap_s=GL.GL_REPEAT, wrap_t=GL.GL_REPEAT, mag_filter=GL.GL_NEAREST, min_filter=GL.GL_NEAREST, internal_format=GL.GL_RGBA32F, format=GL.GL_RGBA, data=None, is_vec=False, path_img=None, cubemap_faces=None):
+    def __init__(self, dimensions=(0.0, 0.0), wrap_s=GL.GL_REPEAT, wrap_t=GL.GL_REPEAT, mag_filter=GL.GL_NEAREST, min_filter=GL.GL_NEAREST, internal_format=GL.GL_RGBA32F, format=GL.GL_RGBA, data=None, is_vec=False, path_img=None, cubemap_faces=None, is_fbo=False):
+
         self.glid = GL.glGenTextures(1)
 
         if cubemap_faces:
             self.type = GL.GL_TEXTURE_CUBE_MAP
             GL.glBindTexture(self.type, self.glid)
             # texture parameters are the same for each face
-            GL.glTexParameteri(self.type, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
-            GL.glTexParameteri(self.type, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
-            GL.glTexParameteri(self.type, GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE) #3 dimensions texture !!!
-            GL.glTexParameteri(self.type, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
-            GL.glTexParameteri(self.type, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(
+                self.type, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexParameteri(
+                self.type, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+            # 3 dimensions texture !!!
+            GL.glTexParameteri(
+                self.type, GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexParameteri(
+                self.type, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(
+                self.type, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
 
             # loading the 6 2DImages of the cube
             for i in range(len(cubemap_faces)):
@@ -57,10 +64,10 @@ class Texture:
             GL.glTexParameteri(self.type, GL.GL_TEXTURE_MAG_FILTER, mag_filter)
             GL.glTexImage2D(self.type, 0, GL.GL_RGBA, tex.width, tex.height,
                             0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, tex.tobytes())
-            print(f'Loaded texture {path_img} ({tex.width}x{tex.height}'
-                  f' wrap={str(wrap_t).split()[0]}'
-                  f' min={str(min_filter).split()[0]}'
-                  f' mag={str(mag_filter).split()[0]})')
+            # print(f'Loaded texture {path_img} ({tex.width}x{tex.height}'
+            #       f' wrap={str(wrap_t).split()[0]}'
+            #       f' min={str(min_filter).split()[0]}'
+            #       f' mag={str(mag_filter).split()[0]})')
         else:
             # binding the texture
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.glid)
@@ -75,6 +82,9 @@ class Texture:
             if is_vec:
                 GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, self.preset.internal_format,
                                 self.dimensions[0], self.dimensions[1], 0, self.preset.format, GL.GL_FLOAT, data)
+            elif is_fbo:
+                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, self.preset.internal_format,
+                                self.dimensions[0], self.dimensions[1], 0, self.preset.format, GL.GL_FLOAT, None)
             else:
                 GL.glTexStorage2D(
                     GL.GL_TEXTURE_2D, 1, self.preset.internal_format, dimensions[0], dimensions[1])

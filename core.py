@@ -17,6 +17,7 @@ from random import randint
 from utils.transform import Trackball, identity, rotate, scale, vec, translate
 from utils.camera import Camera
 from world.block import Chunk
+from world.fog.post_proc import PostProcessing
 from world.skybox.skybox import Skybox
 from world.tree.tree import make_tree, move_tree
 from world.wind_turbine.wind_turbine import make_turbine
@@ -209,9 +210,9 @@ def load(file, shader, tex_file=None, **params):
         for node_to_populate in nodes_per_mesh_id[mesh_id]:
             node_to_populate.add(new_mesh)
 
-    nb_triangles = sum((mesh.mNumFaces for mesh in scene.mMeshes))
-    print('Loaded', file, '\t(%d meshes, %d faces, %d nodes, %d animations)' %
-          (scene.mNumMeshes, nb_triangles, len(nodes), scene.mNumAnimations))
+    # nb_triangles = sum((mesh.mNumFaces for mesh in scene.mMeshes))
+    # print('Loaded', file, '\t(%d meshes, %d faces, %d nodes, %d animations)' %
+    #       (scene.mNumMeshes, nb_triangles, len(nodes), scene.mNumAnimations))
     return [root_node]
 
 
@@ -219,7 +220,7 @@ def load(file, shader, tex_file=None, **params):
 class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
 
-    def __init__(self, width=1500, height=1000, size=128):
+    def __init__(self, instructions, width=1500, height=1000, size=128):
         from utils.shaders import Shader
         from utils.transform import translate, rotate, scale
         super().__init__()
@@ -238,7 +239,7 @@ class Viewer(Node):
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         glfw.window_hint(glfw.RESIZABLE, True)
-        self.win = glfw.create_window(width, height, 'Project', None, None)
+        self.win = glfw.create_window(width, height, 'Les koalas vont dominer le monde', None, None)
 
         # make win's OpenGL context current; no OpenGL calls can happen before
         glfw.make_context_current(self.win)
@@ -256,22 +257,30 @@ class Viewer(Node):
         glfw.set_cursor_pos_callback(self.win, self.on_mouse_move)
         glfw.set_mouse_button_callback(self.win, self.on_mouse_click)
         glfw.set_window_size_callback(self.win, self.on_size)
+        self.win_size = glfw.get_window_size(self.win)
+
 
         # useful message to check OpenGL renderer characteristics
         print('OpenGL', GL.glGetString(GL.GL_VERSION).decode() + ', GLSL',
               GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION).decode() +
               ', Renderer', GL.glGetString(GL.GL_RENDERER).decode())
+        
+        # instructions
+        print(instructions)
 
         # initialize GL by setting viewport and default render characteristics
         GL.glEnable(GL.GL_CULL_FACE)
         GL.glCullFace(GL.GL_FRONT)
         GL.glEnable(GL.GL_DEPTH_TEST)  # depth test now enabled (TP2)
 
+        GL.glClearColor(0.3, 0.4, 0.6, 0.1)
+
         # cyclic iterator to easily toggle polygon rendering modes
         self.fill_modes = cycle([GL.GL_LINE, GL.GL_POINT, GL.GL_FILL])
 
         # skybox init
         self.skybox = Skybox(50.0)
+        self.light_pos = vec(5000.0, 5000.0, -5000.0)
 
         # terrain/ocean mesh related attributes
         self.chunk_size = size
@@ -293,7 +302,7 @@ class Viewer(Node):
         self.turbine = []
         # we move manually each turbine in order to make the scene look good
         for translation in translations_wind_turbine:
-            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -220)) # they face the wind
+            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -40)) # they face the wind
             move_turbine.add(turbine)
             self.turbine.append(move_turbine)
 
@@ -333,85 +342,34 @@ class Viewer(Node):
         self.number_koala = 0
         self.pos_koala = {"x": [-700, 150], "y": [320], "z": [1000, 1300]}
 
-
-        print("""\n\n\n############### UTILISATION DU CLAVIER ###############
-    - Z : avancer dans la direction pointée par la caméra
-    - S : reculer (idem)
-    - Q : aller à gauche (sur le code on voit qu'il faut appuyer A mais le clavier par défaut est un clavier QWERTY)
-    - D : aller à droite
-    - Espace : monter
-    - Backspace : descendre
-
-    - Flèche du haut : tourne la caméra vers le haut (selon l'axe z)
-    - Flèche du bas : tourne la caméra vers le bas (selon l'axe z)
-    - Flèche de gauche : tourne la caméra vers la gauche (i.e. dans le sens antihoraire selon l'axe y)
-    - Flèche de droite : tourne la caméra vers la droite (i.e.sens horaire) 
-
-    - K : faire apparaître un koala
-    - P : 
-        - 1ère fois : affiche la scène uniquement avec des triangles, 
-        - 2ème fois : affiche uniquement les sommets des objets de la scène, 
-        - 3ème fois : retour à l'affichage classique
-    - C : changer de point de vue, passer du mode caméra au sol au mode caméra en l'air puis inversement.
-    - Echap : quitte la scène
-######################################################""")
+        # init post-processing & fbo
+        self.post_proc = PostProcessing(win_size=self.win_size)
 
 
     def run(self):
         """ Main render loop for this OpenGL window """
         while not glfw.window_should_close(self.win):
 
-            # update viewer's attributes
-            win_size = glfw.get_window_size(self.win)
+            # binding fbo (for post-processing)
+            #self.post_proc.fbo.bind()
 
+            # clear buffers before rendering scene
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
+            # update viewer's attributes
+            self.win_size = glfw.get_window_size(self.win)
             current_frame = glfw.get_time()
             self.delta_time = current_frame - self.last_frame
             self.last_frame = current_frame
-            self.chunk.update(current_frame)
-            view_matrix = self.camera.view_matrix()
-            projection_matrix = self.camera.projection_matrix(win_size)
-            
-            # opaque objects
-            for turbine in self.turbine:
-                turbine.draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos)
-            
-            self.tree.draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos)
-            
 
-            self.chunk.draw(view=view_matrix,
-                        projection=projection_matrix,
-                        w_camera_position=self.camera.camera_pos,
-                        skybox=self.skybox.cubemap_text)
+            # rendering scene first
+            self.render_scene()
 
-            # objects we loaded in our scene
-            # animals and other objects have a different cull face than all the other objects 
-            # so we change that parameter before changing it again after drawing all animals
-            GL.glCullFace(GL.GL_BACK)
-            self.draw(view=view_matrix,
-                      projection=projection_matrix,
-                      w_camera_position=self.camera.camera_pos)
-            GL.glCullFace(GL.GL_FRONT)
+            # unbinding fbo
+            #self.post_proc.fbo.unbind()
 
-            # skybox (optimization)
-            # we want the skybox to be drawn behind every other object in the scene -> not in depth buffer
-            GL.glDepthFunc(GL.GL_LEQUAL)
-            GL.glDisable(GL.GL_CULL_FACE)
-            self.skybox.draw(view=view_matrix, proj=projection_matrix)
-            GL.glEnable(GL.GL_CULL_FACE)
-            GL.glDepthFunc(GL.GL_LESS)
-
-            # transparent objects
-            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-            GL.glBlendEquation(GL.GL_FUNC_ADD)
-            GL.glDepthMask(GL.GL_FALSE)
-            self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
-            self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
-            GL.glDepthMask(GL.GL_TRUE)
-            GL.glDisable(GL.GL_BLEND)
+            # post processing effects (fog...)
+            #self.post_process()
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
@@ -419,8 +377,58 @@ class Viewer(Node):
             # Poll for and process events
             glfw.poll_events()
 
-            GL.glClearColor(0.3, 0.4, 0.6, 0.1)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+    def render_scene(self):
+
+        self.chunk.update(self.last_frame)
+        view_matrix = self.camera.view_matrix()
+        projection_matrix = self.camera.projection_matrix(self.win_size)
+        
+        # opaque objects
+
+        for turbine in self.turbine:
+            turbine.draw(view=view_matrix,
+                    projection=projection_matrix,
+                    w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
+        
+        # self.tree.draw(view=view_matrix,
+        #             projection=projection_matrix,
+        #             w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
+        
+
+        self.chunk.draw(view=view_matrix,
+                    projection=projection_matrix,
+                    w_camera_position=self.camera.camera_pos,
+                    skybox=self.skybox.cubemap_text, light_pos=self.light_pos)
+
+        # animals and other objects have a different cull face than all the other objects (artist's choice)
+        # so we change that parameter before changing it again after drawing all animals
+        GL.glCullFace(GL.GL_BACK)
+        self.draw(view=view_matrix,
+                    projection=projection_matrix,
+                    w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
+        GL.glCullFace(GL.GL_FRONT)
+
+        # skybox (optimization)
+        # we want the skybox to be drawn behind every other object in the scene
+        GL.glDepthFunc(GL.GL_LEQUAL)
+        GL.glDisable(GL.GL_CULL_FACE)
+        self.skybox.draw(view=view_matrix, proj=projection_matrix)
+        GL.glEnable(GL.GL_CULL_FACE)
+        GL.glDepthFunc(GL.GL_LESS)
+
+        # semi-transparent objects -> particles
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        GL.glBlendEquation(GL.GL_FUNC_ADD)
+        GL.glDepthMask(GL.GL_FALSE)
+        self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+        self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
+        GL.glDepthMask(GL.GL_TRUE)
+        GL.glDisable(GL.GL_BLEND)
+    
+    def post_process(self):
+        # we don't want our quad to pass the depth test
+        self.post_proc.draw()
+
 
 
     def on_key(self, _win, key, _scancode, action, _mods):

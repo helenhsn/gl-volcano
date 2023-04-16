@@ -30,6 +30,7 @@ void main() {
     vec2 dx_D = (displacement_right.xz - displacement_left.xz) * (N_f32/L_f32);
     vec2 dy_D = (displacement_top.xz - displacement_bottom.xz) * (N_f32/L_f32);
 
+    // jacobian 
     float jacobian = (1.0 + dx_D.x) * (1.0 + dy_D.y) - dx_D.y * dy_D.x;
 
     imageStore(gradients, loc, vec4(grad, 2*L_f32/N_f32, jacobian));

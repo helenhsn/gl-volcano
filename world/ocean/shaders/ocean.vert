@@ -136,20 +136,10 @@ void tiling(inout vec3 d, inout vec3 n, vec3 p) {
 }
 
 
-
-float fog_from_height(vec3 pos, float noise) {
-
-    return (1. - smoothstep(0,1.5, exp((pos.y-40000.0)*0.002))) * (1.- (smoothstep(0,1.5, exp((length(pos.xz) + noise*6.0 -6000.0)*0.001))));
-}
-
-
 out VS_OUTPUT {
     vec3 position;
     vec2 uv;
     vec3 normal;
-    vec3 col;
-    float fog_plane_f;
-
 } OUTPUT;
 
 void main() {
@@ -177,7 +167,5 @@ void main() {
 
     OUTPUT.position = blend_height(world_pos, clamp_factor);
     OUTPUT.normal = blend_normal(n, clamp_factor);
-    OUTPUT.col = OUTPUT.position;
-    OUTPUT.fog_plane_f = fog_from_height(OUTPUT.position, noise_cliff);
     gl_Position = projection * view * vec4(OUTPUT.position, 1);
 }

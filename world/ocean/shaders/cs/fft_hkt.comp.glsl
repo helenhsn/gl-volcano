@@ -40,8 +40,9 @@ void main(void)
 	float kn2 = dot(k, k);
 	vec2 nk = vec2(0.0, 0.0);
 
-	if (kn2 > 1e-12)
+	if (kn2 > 1e-10)
 		nk = normalize(k);
+
 	// horitonzal displacement
 	vec2 Dt_x = vec2(h_tk.y * nk.x, -h_tk.x * nk.x);
 	vec2 iDt_z = vec2(h_tk.x * nk.y, h_tk.y * nk.y);

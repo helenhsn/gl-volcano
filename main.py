@@ -1,42 +1,39 @@
 #!/usr/bin/env python3
-"""
-Python OpenGL practical application.
-"""
-
-import sys                          # for system arguments
-
-# External, non built-in modules
-import OpenGL.GL as GL              # standard Python OpenGL wrapper
-
-from core import Viewer, Node
-
-from utils.transform import *
-from utils.animation import *
-from world.tree.tree import make_tree
 
 
-# -------------- rotation ----------------------------------------------------
-class RotationControlNode(Node):
-    def __init__(self, key_up, key_down, axis, angle=0):
-        super().__init__(transform=rotate(axis, angle))
-        self.angle, self.axis = angle, axis
-        self.key_up, self.key_down = key_up, key_down
+from core import Viewer
 
-    def key_handler(self, key):
-        self.angle += 5 * int(key == self.key_up)
-        self.angle -= 5 * int(key == self.key_down)
-        self.transform = rotate(self.axis, self.angle)
-        super().key_handler(key)
-
-
-# -------------- main program and scene setup --------------------------------
 def main():
-    """ create a window, add scene objects, then run rendering loop """
+
+    # instructions
+    instructions = """\n\n\n############### UTILISATION DU CLAVIER ###############
+    - Z : avancer dans la direction pointée par la caméra
+    - S : reculer (idem)
+    - Q : aller à gauche (sur le code on voit qu'il faut appuyer A mais le clavier par défaut est un clavier QWERTY)
+    - D : aller à droite
+    - Espace : monter
+    - Backspace : descendre
+
+    - Flèche du haut : tourne la caméra vers le haut (selon l'axe z)
+    - Flèche du bas : tourne la caméra vers le bas (selon l'axe z)
+    - Flèche de gauche : tourne la caméra vers la gauche (i.e. dans le sens antihoraire selon l'axe y)
+    - Flèche de droite : tourne la caméra vers la droite (i.e.sens horaire) 
+
+    - K : faire apparaître un koala
+    - P : 
+        - 1ère fois : affiche la scène uniquement avec des triangles, 
+        - 2ème fois : affiche uniquement les sommets des objets de la scène, 
+        - 3ème fois : retour à l'affichage classique
+    - C : changer de point de vue, passer du mode caméra au sol au mode caméra en l'air puis inversement.
+    - Echap : quitte la scène
+    ######################################################\n\n"""
+
     CHUNK_SIZE = 256 #nb of vertices per chunk side
-    viewer = Viewer(size=CHUNK_SIZE)
+    
+    viewer = Viewer(instructions, size=CHUNK_SIZE)
     # start rendering loop
     viewer.run()
 
 
 if __name__ == '__main__':
-    main()                     # main function keeps variables locally scoped
+    main()

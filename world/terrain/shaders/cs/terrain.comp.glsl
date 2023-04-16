@@ -27,7 +27,7 @@ float random(in vec2 uv)
                  43758.5453123);
 }
 
-// Based on Morgan McGuire @morgan3d -> value noise
+// value noise
 // https://www.shadertoy.com/view/4dS3Wd
 float noise (in vec2 _st) {
     vec2 i = floor(_st);

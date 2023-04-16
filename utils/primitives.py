@@ -213,6 +213,15 @@ class Cube(Mesh):
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms): 
         super().draw(primitives=primitives, **uniforms)
 
+class Quad(Mesh):
+    def __init__(self, shader):
+        positions = [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (-1.0, 1.0), (1.0, -1.0), (1.0, 1.0)]
+        uv = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
+        super().__init__(shader, attributes=dict(position=positions))
+
+    def draw(self, primitives=GL.GL_TRIANGLES, **uniforms): 
+        super().draw(primitives=primitives, **uniforms)
+
 
 
 class Grid(Mesh):

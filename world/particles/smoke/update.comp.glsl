@@ -30,18 +30,14 @@ void main() {
     
     uint loc = gl_GlobalInvocationID.x;
 
-    if (positions[loc].w > 0.01) {
+    if (positions[loc].w > 0.001) {
         positions[loc].xyz += velocities[loc].xyz * dt;
 
-        if (positions[loc].w < 0.1 && positions[loc].y > 800.0) {
-            positions[loc].w *= 0.96;
-            velocities[loc].y *= 0.99; // decrease the speed by 1% each frame (we want smoke to be there much longer)
+        if (positions[loc].w < 0.05 && positions[loc].y > 1100.0) {
+            positions[loc].w *= 0.95;
          } else {
             positions[loc].w *= 0.9;
         }
-        if (positions[loc].w > 0.9)
-            velocities[loc].x *= velocities[loc].x < 0.0 ? 1.02 : 1.005 ; // decrease the speed by 1% each frame (we want smoke to be there much longer)
-            velocities[loc].z *= velocities[loc].z < 0.0 ? 1.02 : 1.005 ; // decrease the speed by 1% each frame (we want smoke to be there much longer)
             
     } else {
         positions[loc] = positions_0[loc];
