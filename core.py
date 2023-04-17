@@ -220,7 +220,7 @@ def load(file, shader, tex_file=None, **params):
 class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
 
-    def __init__(self, instructions, width=1500, height=1000, size=128):
+    def __init__(self, instructions, width=1600, height=1000, size=128):
         from utils.shaders import Shader
         from utils.transform import translate, rotate, scale
         super().__init__()
