@@ -9,7 +9,7 @@ from utils.primitives import Cylinder
 from utils.shaders import Shader
 
 
-def make_turbine(cos, sin):
+def make_turbine(cos, sin, slices):
     """ Creates the bottom of the turbine with 4 sections """
     from core import Node, vec
     from utils.animation import KeyFrameControlNode
@@ -19,13 +19,15 @@ def make_turbine(cos, sin):
     no_axis = (0, 0, 0)
 
     # initialize the cylinder used
-    shader = Shader(vertex_source="world/wind_turbine/shaders/wind_turbine.vert", fragment_source="world/wind_turbine/shaders/wind_turbine.frag")
-    cylinder = Cylinder(shader, 10, 2, 2/3, 1, cos, sin)
+    shader = Shader(vertex_source="world/wind_turbine/shaders/wind_turbine.vert",
+                    fragment_source="world/wind_turbine/shaders/wind_turbine.frag")
+    cylinder = Cylinder(shader, slices, 2, 2/3, 1, cos, sin)
 
     #creation of the four parts
     list_shapes = []
     for i in range(len(sizes)):
-        shape = Node(transform=translate(0, sizes[i], 0) @ scale(radiuses[i], sizes[i], radiuses[i]) @ rotate(no_axis, 0))
+        shape = Node(transform=translate(0, sizes[i], 0) 
+                     @ scale(radiuses[i], sizes[i], radiuses[i]) @ rotate(no_axis, 0))
         shape.add(cylinder)
         if i == 0: # the nearest part to the floor
             transform = Node(transform=rotate(no_axis, 0))
@@ -52,7 +54,7 @@ def make_turbine(cos, sin):
     vect_ab = b - a
 
     # we create the three blades
-    blades(radiuses[3], list_shapes[3], sizes[0], shader, cos, sin)
+    blades(radiuses[3], list_shapes[3], sizes[0], shader, cos, sin, slices)
 
     # animated part of the turbine
     translate_keys = {0: vec(0, 0, 0)}
@@ -72,10 +74,10 @@ def make_turbine(cos, sin):
 
     return list_shapes[0]
 
-def blades(radius, adding_support, size, shader, cos, sin):
+def blades(radius, adding_support, size, shader, cos, sin, slices):
     """ Creates the blades of the turbine"""
     from core import Node
-    cylinder = Cylinder(shader, 10, 2, 1/7, 1, cos, sin)
+    cylinder = Cylinder(shader, slices, 2, 1/7, 1, cos, sin)
     radius_x = size/20
     radius_z = size/5
     angles = [0, 120, -120]
@@ -85,7 +87,9 @@ def blades(radius, adding_support, size, shader, cos, sin):
         # next is moving the blade a little in order to make it more real and put it away from
         # the center of the adding support and we can move on to the rotations in order to get
         # the angle of the blade and put it perpendicular to the adding support
-        blade_part = Node(transform=rotate(vector, angles[i]) @ rotate((1, 0, 1), 90) @ rotate((0, 1, 0), 30) @ translate(0, 8/10*radius, radius) @ translate(radius, size, -radius) @ scale(radius_x, size, radius_z))
+        blade_part = Node(transform=rotate(vector, angles[i]) @ rotate((1, 0, 1), 90)
+                          @ rotate((0, 1, 0), 30) @ translate(0, 8/10*radius, radius)
+                          @ translate(radius, size, -radius) @ scale(radius_x, size, radius_z))
         blade_part.add(cylinder)
         adding_support.add(blade_part)
 

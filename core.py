@@ -4,28 +4,24 @@ from itertools import cycle         # allows easy circular choice list
 import atexit                       # launch a function at exit
 
 # External, non built-in modules
+from random import randint
 import OpenGL.GL as GL              # standard Python OpenGL wrapper
 import glfw                         # lean window system wrapper for OpenGL
 import numpy as np                  # all matrix manipulations & OpenGL args
 import assimpcy
 from utils.primitives import Mesh, init_cos_sin
 from utils.shaders import Shader # 3D resource loader
-from random import randint
 
 
 # our transform functions
-from utils.transform import Trackball, identity, rotate, scale, vec, translate
+from utils.transform import identity, rotate, scale, vec, translate
 from utils.camera import Camera
+
+# our objects
 from world.block import Chunk
 from world.fog.post_proc import PostProcessing
 from world.skybox.skybox import Skybox
-from world.tree.tree import make_tree, move_tree
 from world.wind_turbine.wind_turbine import make_turbine
-from utils.primitives import Cylinder
-
-import os
-import OpenGL.GL as GL
-
 from world.particles.smoke.smoke_ps import SmokeParticleSystem
 from world.particles.splashes.splash_ps import SplashParticleSystem
 
@@ -56,21 +52,7 @@ class Animal(Node):
     """ Animal based on provided load function """
     def __init__(self, shader, path_obj):
         super().__init__()
-        self.add(*load(path_obj, shader))  # just load capy from file
-
-class Fence(Node):
-    """ Fence based on provided load function """
-    def __init__(self, shader):
-        super().__init__()
-        self.add(*load('world/pen/13078_Wooden_Post_and_Rail_Fence_v1_l3.obj', shader))  # just load capy from file
-
-class Pen(Node):
-    def __init__(self):
-        super().__init__()
-        node = Node(transform=translate(-1500, 1500, 600) @ scale(300, 3000, 3000))
-        node.add(Fence(shader=Shader(vertex_source="world/pen/shaders/pen.vert", fragment_source="world/pen/shaders/pen.frag")))
-        self.add(node)
-
+        self.add(*load(path_obj, shader))  # just load animal from file
 
 # -------------- 3D resource loader -------------------------------------------
 MAX_BONES = 128
@@ -113,7 +95,7 @@ def load(file, shader, tex_file=None, **params):
             # search texture in file's whole subdir since path often screwed up
             paths = os.walk(path, followlinks=True)
             tfile = next((os.path.join(d, f) for d, _, n in paths for f in n
-                     if name.startswith(f) or f.startswith(name)), None)
+                          if name.startswith(f) or f.startswith(name)), None)
             assert tfile, 'Cannot find texture %s in %s subtree' % (name, path)
         else:
             tfile = None
@@ -221,8 +203,6 @@ class Viewer(Node):
     """ GLFW viewer window, with classic initialization & graphics loop """
 
     def __init__(self, instructions, width=1600, height=1000, size=128):
-        from utils.shaders import Shader
-        from utils.transform import translate, rotate, scale
         super().__init__()
 
         # initialize and automatically terminate glfw on exit
@@ -264,7 +244,7 @@ class Viewer(Node):
         print('OpenGL', GL.glGetString(GL.GL_VERSION).decode() + ', GLSL',
               GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION).decode() +
               ', Renderer', GL.glGetString(GL.GL_RENDERER).decode())
-        
+
         # instructions
         print(instructions)
 
@@ -290,25 +270,28 @@ class Viewer(Node):
         self.splash_ps = SplashParticleSystem()
         self.smoke_ps = SmokeParticleSystem()
 
-        # tree init
-        # initialise the angles we will use for the cylinders
-        cosines, sines = init_cos_sin(10)
-        self.tree = [make_tree(cosines, sines)]
-        self.tree = move_tree(self.tree, [(1100.0, 310.0, 0.0)])[0]
+        # initialization of the angles we will use for the cylinder
+        slices = 10
+        cosines, sines = init_cos_sin(slices)
 
         # wind turbine init
-        turbine = make_turbine(cosines, sines)
-        translations_wind_turbine = [(-1300, 300, 400), (-1000, 300, 300), (-1300, 300, 600), (-900, 300, 800), (-700, 300, 800)]
+        turbine = make_turbine(cosines, sines, slices)
+        translations_wind_turbine = [(-1300, 300, 400),
+                                     (-1000, 300, 300),
+                                     (-1300, 300, 600),
+                                     (-900, 300, 800),
+                                     (-700, 300, 800)]
         self.turbine = []
         # we move manually each turbine in order to make the scene look good
         for translation in translations_wind_turbine:
-            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -40)) # they face the wind
+            # they face the wind
+            move_turbine = Node(transform=translate(translation) @ rotate((0, 1, 0), -40))
             move_turbine.add(turbine)
             self.turbine.append(move_turbine)
 
         # initialize the koalas
         from utils.transform import quaternion_from_axis_angle
-        
+
         # animate all koalas, they just do a yoyo effect
         translate_keys = {0: vec(0, 0, 0), 2: vec(0, 0, 0), 3: vec(0, 0, 0)}
         rotate_keys = {0: quaternion_from_axis_angle((1, 0, 1), 0),
@@ -318,12 +301,14 @@ class Viewer(Node):
                        8: quaternion_from_axis_angle((1, 0, 1), 0)}
         scale_keys = {0: 1, 1: 0.95, 2: 1, 4: 1.05, 6: 1} # they also breathe a lot
         keynode = KeyFrameControlNode(translate_keys, rotate_keys, scale_keys, modulo=8)
-        shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert", fragment_source="world/animals/shaders/texture.frag")
+        shader_for_animals = Shader(vertex_source="world/animals/shaders/texture.vert",
+                                    fragment_source="world/animals/shaders/texture.frag")
 
         # we load a Koala and we save it when it is correctly turned
         koala = Animal(shader_for_animals, 'world/animals/koala.obj')
         keynode.add(koala)
-        rotated_koala = Node(transform=rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90) @ rotate((1, 0, 0), -90))
+        rotated_koala = Node(transform=rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90)
+                             @ rotate((1, 0, 0), -90) @ scale(0.5, 0.5, 0.5))
         rotated_koala.add(keynode)
         self.koala = rotated_koala
 
@@ -340,7 +325,37 @@ class Viewer(Node):
             self.add(node_koala)
 
         self.number_koala = 0
-        self.pos_koala = {"x": [-700, 150], "y": [320], "z": [1000, 1300]}
+        self.pos_koala = {"x": [-600, 150], "y": [320], "z": [1000, 1300]}
+
+
+        # we load a Sheep now
+        sheep = Animal(shader_for_animals, 'world/animals/Sheep.obj')
+
+        # animate sheeps
+        rotate_keys2 = {0: quaternion_from_axis_angle((1, 0, 1), 0),
+                        1: quaternion_from_axis_angle((1, 0, 1), 4),
+                        2: quaternion_from_axis_angle((1, 0, 1), 0),
+                        3: quaternion_from_axis_angle((1, 0, 1), -4),
+                        4: quaternion_from_axis_angle((1, 0, 1), 0)}
+        scale_keys = {0: 1, 1: 0.98, 2: 1, 3: 1.03, 4: 1} # they also breathe a lot
+        keynode = KeyFrameControlNode(translate_keys, rotate_keys2, scale_keys, modulo=4)
+
+        keynode.add(sheep)
+        rotated_sheep = Node(transform=rotate((0, 1, 0), 180) @ rotate((0, 1, 0), -90)
+                             @ rotate((1, 0, 0), -90))
+        rotated_sheep.add(keynode)
+
+        # we add each sheep to the scene
+        positions_sheep = [((900, 548, 800), 170),
+                           ((-1100, 320, -500), 80),
+                           ((-1000, 320, -600), 180),
+                           ((-1100, 320, -700), 300),
+                           ((-1200, 320, -720), 280),
+                           ((-1050, 320, -500), 100)]
+        for pos, angle in positions_sheep:
+            node_sheep = Node(transform=translate(pos) @ rotate((0, 1, 0), angle))
+            node_sheep.add(rotated_sheep)
+            self.add(node_sheep)
 
         # init post-processing & fbo
         self.post_proc = PostProcessing(win_size=self.win_size)
@@ -382,30 +397,25 @@ class Viewer(Node):
         self.chunk.update(self.last_frame)
         view_matrix = self.camera.view_matrix()
         projection_matrix = self.camera.projection_matrix(self.win_size)
-        
+
         # opaque objects
 
         for turbine in self.turbine:
             turbine.draw(view=view_matrix,
-                    projection=projection_matrix,
-                    w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
-        
-        # self.tree.draw(view=view_matrix,
-        #             projection=projection_matrix,
-        #             w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
-        
+                         projection=projection_matrix,
+                         w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
 
         self.chunk.draw(view=view_matrix,
-                    projection=projection_matrix,
-                    w_camera_position=self.camera.camera_pos,
-                    skybox=self.skybox.cubemap_text, light_pos=self.light_pos)
+                        projection=projection_matrix,
+                        w_camera_position=self.camera.camera_pos,
+                        skybox=self.skybox.cubemap_text, light_pos=self.light_pos)
 
-        # animals and other objects have a different cull face than all the other objects (artist's choice)
+        # animals have a different cull face than all the other objects (artist's choice)
         # so we change that parameter before changing it again after drawing all animals
         GL.glCullFace(GL.GL_BACK)
         self.draw(view=view_matrix,
-                    projection=projection_matrix,
-                    w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
+                  projection=projection_matrix,
+                  w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
         GL.glCullFace(GL.GL_FRONT)
 
         # skybox (optimization)
@@ -419,14 +429,16 @@ class Viewer(Node):
         # semi-transparent objects -> particles
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
         GL.glDepthMask(GL.GL_FALSE)
-        self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
+        self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)
         self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
         GL.glDepthMask(GL.GL_TRUE)
         GL.glDisable(GL.GL_BLEND)
-    
+
     def post_process(self):
         # we don't want our quad to pass the depth test
-        self.post_proc.draw(win_size=self.win_size, view=self.camera.view_matrix(), proj=self.camera.projection_matrix(self.win_size), is_fog=self.is_fog, w_camera_position=self.camera.camera_pos)
+        self.post_proc.draw(win_size=self.win_size, view=self.camera.view_matrix(),
+                            proj=self.camera.projection_matrix(self.win_size), is_fog=self.is_fog,
+                            w_camera_position=self.camera.camera_pos)
 
 
 
@@ -438,22 +450,23 @@ class Viewer(Node):
 
             if key == glfw.KEY_P: #wireframe mode
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
-            
+
             if key == glfw.KEY_F: # enables/disables fog
                 self.is_fog = not self.is_fog
-            
+
             if key == glfw.KEY_K:  # a koala appears randomly by pressing a button
                 if self.number_koala < MAX_KOALA:
                     # random position
                     x = randint(self.pos_koala["x"][0], self.pos_koala["x"][1])
                     y = self.pos_koala["y"][0]
                     z = randint(self.pos_koala["z"][0], self.pos_koala["z"][1])
-                    # random rotation 
-                    transform_koala = Node(transform=translate(x, y, z) @ rotate((0, 1, 0), randint(0, 360)))
+                    # random rotation
+                    transform_koala = Node(transform=translate(x, y, z)
+                                           @ rotate((0, 1, 0), randint(0, 360)))
                     transform_koala.add(self.koala)
                     self.add(transform_koala)
                     self.number_koala += 1
-                else: 
+                else:
                     print("Please, don't let koalas destroy humanity...")
 
             self.camera.handle_keys(key, action, self.delta_time)
@@ -461,16 +474,15 @@ class Viewer(Node):
             # call Node.key_handler which calls key_handlers for all drawables
             self.key_handler(key)
 
-            
     def add(self, *drawables):
         """ Add drawables to this node, simply updating children list """
         self.children.extend(drawables)
 
 
 
-    def on_mouse_move(self, win, xpos, ypos):
+    def on_mouse_move(self, _win, xpos, ypos):
         if self.mouse_move:
-            self.mouse = (xpos,  ypos)
+            self.mouse = (xpos, ypos)
             if self.first_mouse_move:
                 self.previous_mouse_pos = self.mouse
                 self.first_mouse_move = False
@@ -480,7 +492,7 @@ class Viewer(Node):
                 self.camera.handle_mouse_movement(offset_x, offset_y)
                 self.previous_mouse_pos = self.mouse
 
-    def on_mouse_click(self, win, button, action, mods):
+    def on_mouse_click(self, _win, button, action, _mods):
         if action == glfw.PRESS and button == glfw.MOUSE_BUTTON_LEFT:
             self.mouse_move = not self.mouse_move
             self.first_mouse_move = True

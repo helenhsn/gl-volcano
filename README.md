@@ -35,7 +35,12 @@ Ces effets sont également possibles à l'aide de la souris, cliquez sur la scè
   - **1ère fois** : affiche la scène uniquement avec des triangles (wireframe mode), 
   - **2ème fois** : affiche uniquement les vertices de la scène, 
   - **3ème fois** : retour à l'affichage classique.
-- **C** : changer de point de vue, passer du mode caméra au sol au mode caméra en l'air puis inversement.
+- **C** : changer de point de vue, il y en a 5 : 
+  - vue distante
+  - vue de près en dessous des éoliennes, parmi les koalas
+  - vue de l'océan
+  - vue de l'île de derrière
+  - vue près du mouton qui cherche à dominer le monde
 - **F** : active/désactive le fog
 - **Echap** : quitte la scène
 
@@ -43,7 +48,7 @@ Ces effets sont également possibles à l'aide de la souris, cliquez sur la scè
 
 ## Éléments choisis pour répondre aux critères du sujet
 
-- L'**élément hiérarchique avec géométrie procédurale et animé avec des keyframes** correspond aux éoliennes qui sont générées avec des cylindres (déformés). Une animation y est mise avec des keyframes afin de faire bouger les pales d'une manière réaliste. Un arbre est créé de la même manière et les parties animées sont le tronc et toutes les branches terminales.
+- L'**élément hiérarchique avec géométrie procédurale et animé avec des keyframes** correspond aux éoliennes qui sont générées avec des cylindres (déformés). Une animation y est mise avec des keyframes afin de faire bouger les pales d'une manière réaliste. 
 - Le **contrôle au keyboard** concerne principalement l'utilisation de la caméra et l'apparition des koalas sur le terrain. La caméra est entièrement contrôlable grâce au clavier. 
 - La **skybox** est présente et est infinie (on ne peut y sortir) : elle est basée sur un cubemap (cube sur lequel on colle une texture 3D de type samplerCube).
 - Deux **systèmes de particules** sont présents dans la scène : un pour la fumée qui s'échappe du volcan (contenant environ 32000 particules) et un pour les petits splash de lave sortant du volcan (environ 500 particules). Les deux systèmes sont mis à jour entièrement sur GPU (via l'utilisation de compute shaders & shader storage buffer objects). La fumée est représentée par un particle atlas trouvé sur internet (pas assez de temps pour faire nos propres textures de feu...).

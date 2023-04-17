@@ -1,25 +1,20 @@
 import glfw
-from utils.transform import *
-from math import cos, sin, pi
+from utils.transform import vec, translate, normalized, np, perspective
+
 class Camera:
     def __init__(self):
-
-        # close up mode
-        self.camera_pos_closeup = vec(-1022.3244, 362.63553, 810.2243)
-        self.pitch_closeup = 10.0
-        self.yaw_closeup = 80.0
-
-        # distant camera
-        self.camera_pos_distant = vec(0.0, 1000.0, 2200.0)
-        self.pitch_distant = -20.0
-        self.yaw_distant = 95.0
-
-        self.is_closeup = False
+        # different camera positions        camera_pos      pitch   yaw
+        self.camera_positions = [(vec(0.0, 1000.0, 2200.0), -20.0, 95.0), # distant camera
+                                 (vec(-1022.3244, 362.63553, 810.2243), 10.0, 80.0), # near koalas
+                                 (vec(2000.0, 280.0, 2000.0), -20.0, -90.0), # above the water
+                                 (vec(0.0, 1200.0, -2300.0), -20.0, -90.0), # behind the island
+                                 (vec(800.0, 610.0, 840.0), -10.0, 0.0)] # near the sheep all alone
+        self.index_camera = 1
 
         # current camera attributes (pos, yaw, pitch...) default = distant camera
-        self.camera_pos = self.camera_pos_distant # current camera pos
-        self.pitch = self.pitch_distant
-        self.yaw =self.yaw_distant
+        self.camera_pos = np.copy(self.camera_positions[0][0]) # current camera pos
+        self.pitch = self.camera_positions[0][1]
+        self.yaw = self.camera_positions[0][2]
 
         # camera referential
         self.world_up = vec(0.0, 1.0, 0.0)
@@ -37,14 +32,15 @@ class Camera:
         self.proj = None
 
 
-    
+
     def update_vectors(self):
 
         rad_yaw = np.deg2rad(self.yaw)
         rad_pitch = np.deg2rad(self.pitch)
 
         pitch_cos = np.cos(rad_pitch)
-        self.fwd = np.array([np.cos(rad_yaw)* pitch_cos, np.sin(rad_pitch), -np.sin(rad_yaw)*pitch_cos])
+        self.fwd = np.array([np.cos(rad_yaw)* pitch_cos, np.sin(rad_pitch),
+                             -np.sin(rad_yaw)*pitch_cos])
         self.fwd = normalized(self.fwd)
 
         # updating rgt & up vectors
@@ -100,22 +96,21 @@ class Camera:
                 self.pitch -= 5
 
         if (key == glfw.KEY_C and (action == glfw.REPEAT or action == glfw.PRESS)):
-            if (self.is_closeup):
-                self.camera_pos = self.camera_pos_distant
-                self.yaw = self.yaw_distant
-                self.pitch = self.pitch_distant
-            else:
-                self.camera_pos = self.camera_pos_closeup
-                self.yaw = self.yaw_closeup
-                self.pitch = self.pitch_closeup
-            
+            if self.index_camera == 5:
+                self.index_camera = 0
+
+            self.camera_pos = np.copy(self.camera_positions[self.index_camera][0])
+            self.pitch = self.camera_positions[self.index_camera][1]
+            self.yaw = self.camera_positions[self.index_camera][2]
+            self.index_camera += 1
 
             self.world_up = vec(0.0, 1.0, 0.0)
             self.up = vec(0.0, 1.0, 0.0)
             self.rgt = vec(0.0, 0.0, 0.0)
             self.fwd = vec(0.0, 0.0, -1.0)
-            self.is_closeup = not self.is_closeup
-            self.update_vectors()
+
+        # we update the vectors in case we modified the pitch or the yaw
+        self.update_vectors()
 
     def handle_mouse_movement(self, offset_x, offset_y):
 
