@@ -350,7 +350,6 @@ class Viewer(Node):
     def run(self):
         """ Main render loop for this OpenGL window """
         while not glfw.window_should_close(self.win):
-            print(self.camera.camera_pos)
             # binding fbo (for post-processing)
             self.post_proc.fbo.bind()
 
@@ -427,7 +426,7 @@ class Viewer(Node):
     
     def post_process(self):
         # we don't want our quad to pass the depth test
-        self.post_proc.draw(view=self.camera.view_matrix(), proj=self.camera.projection_matrix(self.win_size), is_fog=self.is_fog, w_camera_position=self.camera.camera_pos)
+        self.post_proc.draw(win_size=self.win_size, view=self.camera.view_matrix(), proj=self.camera.projection_matrix(self.win_size), is_fog=self.is_fog, w_camera_position=self.camera.camera_pos)
 
 
 

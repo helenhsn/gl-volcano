@@ -48,7 +48,7 @@ vec3 apply_fog( in vec3 color, in float dist) {
     float close_to_volcano = length(w_camera_position.xz)-1800.0;
     float gradient = 3.9;
     if (close_to_volcano < 0.0) // we don't want the fog to appear close to the volcano
-        density = 0.002 - (1.0 - smoothstep(0.0, 5.0, exp((length(w_camera_position) - 1425)*0.002)))*0.0005;
+        density = 0.002 - (1.0 - smoothstep(0.0, 5.0, exp((length(w_camera_position) - 1425)*0.002)))*0.0015;
         //gradient = 3.9 + (1.0 - smoothstep(0.0, 5.0, exp((length(w_camera_position) - 1425)*0.002)))*1.5;
     float linear_depth = linearize_depth(dist);
     float xz_fog = exp(-pow(linear_depth*density, gradient));

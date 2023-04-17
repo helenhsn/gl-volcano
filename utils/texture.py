@@ -90,6 +90,11 @@ class Texture:
                     GL.GL_TEXTURE_2D, 1, self.preset.internal_format, dimensions[0], dimensions[1])
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
+    def update_dimensions(self, new_dimensions):
+        self.dimensions = new_dimensions
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.glid)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, self.preset.internal_format,
+                                self.dimensions[0], self.dimensions[1], 0, self.preset.format, GL.GL_FLOAT, None)
 
 # -------------- Textured mesh decorator --------------------------------------
 class Textured:

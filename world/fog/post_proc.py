@@ -39,7 +39,11 @@ class PostProcessing:
             print(f"Framebuffer is not complete: {status}")
         self.fbo.unbind()
     
-    def draw(self, **uniforms):
+    def draw(self, win_size, **uniforms):
+
+        if (win_size[0] != self.color_text.dimensions[0] and win_size[1] != self.color_text.dimensions[1]):
+            self.color_text.update_dimensions(win_size)
+            self.depth_text.update_dimensions(win_size)
 
         GL.glDisable(GL.GL_DEPTH_TEST)
 

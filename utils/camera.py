@@ -12,7 +12,7 @@ class Camera:
         # distant camera
         self.camera_pos_distant = vec(0.0, 1000.0, 2200.0)
         self.pitch_distant = -20.0
-        self.yaw_distant = 90.0
+        self.yaw_distant = 95.0
 
         self.is_closeup = False
 
