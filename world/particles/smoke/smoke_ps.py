@@ -24,9 +24,9 @@ class SmokeParticleSystem:
             phi = uniform(-pi/12.0, pi/4.0)
             theta = uniform(pi/4.0, pi)
 
-            speed_slope_x = R * sin(phi) * cos(theta) * uniform(0.2, 25.0)
-            speed_slope_y = R * cos(phi) * uniform(1.0, 26.0)
-            speed_slope_z = R * sin(phi) * sin(theta) * uniform(0.2, 25.0)
+            speed_slope_x = R * sin(phi) * cos(theta) * uniform(0.2, 15.0)
+            speed_slope_y = R * cos(phi) * uniform(1.0, 20.0)
+            speed_slope_z = R * sin(phi) * sin(theta) * uniform(0.2, 15.0)
             self.velocities[i] = (speed_slope_x, speed_slope_y, speed_slope_z, 0.0) # zero padding for the ssbo
 
         self.init_pos = self.positions.copy()

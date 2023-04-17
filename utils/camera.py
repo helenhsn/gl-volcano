@@ -28,7 +28,7 @@ class Camera:
         self.fwd = vec(0.0, 0.0, -1.0)
 
         # sensitivity, speed
-        self.speed = 50.0
+        self.speed = 300.0
         self.sensitivity = 0.1
         self.update_vectors()
 

@@ -33,10 +33,6 @@ vec3 depth_to_worldpos(float depth) {
 float fog_from_height(vec3 pos, float linear_depth) {
     float factor = 0.02;
     float boundary = 600.0;
-    if (linear_depth > 15000.0) {
-        boundary = 3000.0;
-        factor = 0.001;
-    }
     return 1. - smoothstep(0,0.5, exp((pos.y-boundary)*factor));
 }
 
@@ -45,11 +41,11 @@ vec3 apply_fog( in vec3 color, in float dist) {
 
     vec3 fog_plane_point = vec3(0., 500., 0.);
     float density = 0.002;
-    float gradient = 3.9;
-    density = 0.002 - (1.0 - smoothstep(0.0, 5.0, exp((length(w_camera_position) - 1425)*0.002)))*0.0015;
+    float gradient = 2.9;
+    density = 0.002 - (1.0 - smoothstep(0.0, 5.0, exp((length(w_camera_position) - 1425)*0.002)))*0.001;
     float linear_depth = linearize_depth(dist);
     float xz_fog = exp(-pow(linear_depth*density, gradient));
-    vec3  fog_color  = vec3(0.4549, 0.5255, 0.6);
+    vec3  fog_color  = vec3(0.4706, 0.5961, 0.6549);
 
     // getting world pos from depth value to apply layer fog instead of uniform fog
     vec3 world_pos = depth_to_worldpos(dist);
@@ -57,7 +53,7 @@ vec3 apply_fog( in vec3 color, in float dist) {
     float fog_y = fog_from_height(world_pos, linear_depth);
     xz_fog = 1.-xz_fog;
 
-    return mix(color, fog_color, fog_y*xz_fog);
+    return mix(color, fog_color, fog_y*xz_fog*0.95);
 }
 
 out vec4 out_color;
