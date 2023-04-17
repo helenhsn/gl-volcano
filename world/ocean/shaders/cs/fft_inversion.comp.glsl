@@ -11,8 +11,8 @@ uniform int N;
 
 void main(void)
 {
-	const float choppiness = -150.0;
-	const float height_factor = 150.0;
+	const float choppiness = -120.0;
+	const float height_factor = 120.0;
 
 	ivec2 loc = ivec2(gl_GlobalInvocationID.xy);
 

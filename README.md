@@ -36,6 +36,7 @@ Ces effets sont également possibles à l'aide de la souris, cliquez sur la scè
   - **2ème fois** : affiche uniquement les vertices de la scène, 
   - **3ème fois** : retour à l'affichage classique.
 - **C** : changer de point de vue, passer du mode caméra au sol au mode caméra en l'air puis inversement.
+- **F** : active/désactive le fog
 - **Echap** : quitte la scène
 
 
