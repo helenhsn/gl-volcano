@@ -22,6 +22,6 @@ void main() {
     out_color = texture2D(sprites, uv_scaled + offset);
     out_color.rgb = mix(out_color.rgb * vec3(1.0, 0.0, 0.0), vec3(1.0, 0.6, 0.0), clamp(IN.lifetime, 0.0, 0.8));
     out_color.rgb = mix(vec3(0.0, 0.0, 0.0), out_color.rgb, IN.lifetime);
-    out_color.a *=0.18;
+    out_color.a *=0.2;
 
 }
