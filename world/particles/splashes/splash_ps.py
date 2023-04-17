@@ -10,7 +10,7 @@ from math import pi, sin, cos
 class SplashParticleSystem:
     def __init__(self):
 
-        self.nb_particles = 512
+        self.nb_particles = 1024
 
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)
         self.positions = [(uniform(-10.0, 10.0), 1370.0, uniform(-10.0, 10.0), uniform(25.0, 50.0)) for _ in range(self.nb_particles)]

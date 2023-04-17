@@ -12,7 +12,7 @@ class SmokeParticleSystem:
 
         self.nb_particles = 32768
         
-        sample_chisquared = np.random.noncentral_chisquare(df=20, nonc=0.00001, size=self.nb_particles)
+        sample_chisquared = np.random.noncentral_chisquare(df=1, nonc=0.00001, size=self.nb_particles)
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)
         self.positions = [(0.0, 1350.0, 0.0, sample_chisquared[i]) for i in range(self.nb_particles)]
         self.positions = np.asarray(self.positions, dtype=np.float32)
@@ -21,11 +21,11 @@ class SmokeParticleSystem:
         R = 40.0
 
         for i in range(self.nb_particles):
-            phi = uniform(-pi/12.0, pi/4.0)
-            theta = uniform(pi/4.0, pi)
+            phi = uniform(-pi/12.0, pi/5.0)
+            theta = uniform(0.0, 2*pi)
 
             speed_slope_x = R * sin(phi) * cos(theta) * uniform(0.2, 15.0)
-            speed_slope_y = R * cos(phi) * uniform(1.0, 20.0)
+            speed_slope_y = R * cos(phi) * uniform(0.5, 15.0)
             speed_slope_z = R * sin(phi) * sin(theta) * uniform(0.2, 15.0)
             self.velocities[i] = (speed_slope_x, speed_slope_y, speed_slope_z, 0.0) # zero padding for the ssbo
 

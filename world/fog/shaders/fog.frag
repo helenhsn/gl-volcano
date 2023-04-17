@@ -45,7 +45,7 @@ vec3 apply_fog( in vec3 color, in float dist) {
     density = 0.002 - (1.0 - smoothstep(0.0, 5.0, exp((length(w_camera_position) - 1425)*0.002)))*0.001;
     float linear_depth = linearize_depth(dist);
     float xz_fog = exp(-pow(linear_depth*density, gradient));
-    vec3  fog_color  = vec3(0.4706, 0.5961, 0.6549);
+    vec3  fog_color  = vec3(0.4039, 0.4745, 0.5059);
 
     // getting world pos from depth value to apply layer fog instead of uniform fog
     vec3 world_pos = depth_to_worldpos(dist);

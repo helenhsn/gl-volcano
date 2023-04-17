@@ -65,7 +65,7 @@ void main()
 
     // reflection
     vec3 reflc = reflect(-v, n);
-    vec3 reflected_color = texture(skybox, reflc).rgb; //* vec3(0.302, 0.302, 0.302);
+    vec3 reflected_color = texture(skybox, reflc).rgb; 
 
     // refraction -> not really necessary as we don't have a ground underwater
     // float descartes = 1.0/1.33;
