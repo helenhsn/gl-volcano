@@ -344,14 +344,15 @@ class Viewer(Node):
 
         # init post-processing & fbo
         self.post_proc = PostProcessing(win_size=self.win_size)
+        self.is_fog = 1 # fog is enabled by default
 
 
     def run(self):
         """ Main render loop for this OpenGL window """
         while not glfw.window_should_close(self.win):
-
+            print(self.camera.camera_pos)
             # binding fbo (for post-processing)
-            #self.post_proc.fbo.bind()
+            self.post_proc.fbo.bind()
 
             # clear buffers before rendering scene
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -366,10 +367,10 @@ class Viewer(Node):
             self.render_scene()
 
             # unbinding fbo
-            #self.post_proc.fbo.unbind()
+            self.post_proc.fbo.unbind()
 
             # post processing effects (fog...)
-            #self.post_process()
+            self.post_process()
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
@@ -418,7 +419,6 @@ class Viewer(Node):
 
         # semi-transparent objects -> particles
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-        GL.glBlendEquation(GL.GL_FUNC_ADD)
         GL.glDepthMask(GL.GL_FALSE)
         self.smoke_ps.draw(dt=self.delta_time, camera=self.camera)    
         self.splash_ps.draw(dt=self.delta_time, camera=self.camera)
@@ -427,7 +427,7 @@ class Viewer(Node):
     
     def post_process(self):
         # we don't want our quad to pass the depth test
-        self.post_proc.draw()
+        self.post_proc.draw(view=self.camera.view_matrix(), proj=self.camera.projection_matrix(self.win_size), is_fog=self.is_fog, w_camera_position=self.camera.camera_pos)
 
 
 
@@ -439,6 +439,9 @@ class Viewer(Node):
 
             if key == glfw.KEY_P: #wireframe mode
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, next(self.fill_modes))
+            
+            if key == glfw.KEY_F: # enables/disables fog
+                self.is_fog = not self.is_fog
             
             if key == glfw.KEY_K:  # a koala appears randomly by pressing a button
                 if self.number_koala < MAX_KOALA:

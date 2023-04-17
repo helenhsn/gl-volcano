@@ -39,7 +39,7 @@ class PostProcessing:
             print(f"Framebuffer is not complete: {status}")
         self.fbo.unbind()
     
-    def draw(self):
+    def draw(self, **uniforms):
 
         GL.glDisable(GL.GL_DEPTH_TEST)
 
@@ -51,7 +51,7 @@ class PostProcessing:
         self.shader.bind()
         self.shader.set_int("color_text", 0)
         self.shader.set_int("depth_text", 1)
-        self.quad.draw()
+        self.quad.draw(**uniforms)
 
         GL.glEnable(GL.GL_DEPTH_TEST)
 

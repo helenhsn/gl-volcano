@@ -215,8 +215,8 @@ class Cube(Mesh):
 
 class Quad(Mesh):
     def __init__(self, shader):
-        positions = [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (-1.0, 1.0), (1.0, -1.0), (1.0, 1.0)]
-        uv = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
+        # clockwise as it is needed for post processing purposes
+        positions = [(-1.0, -1.0), (-1.0, 1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0), (1.0, -1.0)]
         super().__init__(shader, attributes=dict(position=positions))
 
     def draw(self, primitives=GL.GL_TRIANGLES, **uniforms): 

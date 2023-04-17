@@ -3,22 +3,36 @@ from utils.transform import *
 from math import cos, sin, pi
 class Camera:
     def __init__(self):
-        self.camera_pos = vec(0.0, 800.0, 2000.0) # current camera po
-        self.camera_pos_before = vec(0.0, 800.0, 2000.0)
-        self.pitch_before = 0
-        self.yaw_before = 90
+
+        # close up mode
+        self.camera_pos_closeup = vec(-1022.3244, 362.63553, 810.2243)
+        self.pitch_closeup = 10.0
+        self.yaw_closeup = 80.0
+
+        # distant camera
+        self.camera_pos_distant = vec(0.0, 1000.0, 2200.0)
+        self.pitch_distant = -20.0
+        self.yaw_distant = 90.0
+
+        self.is_closeup = False
+
+        # current camera attributes (pos, yaw, pitch...) default = distant camera
+        self.camera_pos = self.camera_pos_distant # current camera pos
+        self.pitch = self.pitch_distant
+        self.yaw =self.yaw_distant
+
+        # camera referential
         self.world_up = vec(0.0, 1.0, 0.0)
         self.up = vec(0.0, 1.0, 0.0)
         self.rgt = vec(0.0, 0.0, 0.0)
         self.fwd = vec(0.0, 0.0, -1.0)
 
-        self.speed = vec(0.0, 0.0, 0.0)
+        # sensitivity, speed
         self.speed = 300.0
         self.sensitivity = 0.1
-        self.pitch = 0.0
-        self.yaw = 90.0
         self.update_vectors()
 
+        # camera matrices
         self.view = None
         self.proj = None
 
@@ -73,32 +87,34 @@ class Camera:
 
         if (key == glfw.KEY_RIGHT and (action == glfw.REPEAT or action == glfw.PRESS)):
             self.yaw -= 5
-            self.update_vectors()
 
         if (key == glfw.KEY_LEFT and (action == glfw.REPEAT or action == glfw.PRESS)):
             self.yaw += 5
-            self.update_vectors()
 
         if (key == glfw.KEY_UP and (action == glfw.REPEAT or action == glfw.PRESS)):
             if self.pitch + 5 < 90:
                 self.pitch += 5
-                self.update_vectors()
 
         if (key == glfw.KEY_DOWN and (action == glfw.REPEAT or action == glfw.PRESS)):
             if self.pitch - 5 > - 90:
                 self.pitch -= 5
-                self.update_vectors()
 
         if (key == glfw.KEY_C and (action == glfw.REPEAT or action == glfw.PRESS)):
-            temp_cam = self.camera_pos
-            temp_pit = self.pitch
-            temp_yaw = self.yaw
-            self.camera_pos = self.camera_pos_before
-            self.pitch = self.pitch_before
-            self.yaw = self.yaw_before
-            self.camera_pos_before = temp_cam
-            self.pitch_before = temp_pit
-            self.yaw_before = temp_yaw
+            if (self.is_closeup):
+                self.camera_pos = self.camera_pos_distant
+                self.yaw = self.yaw_distant
+                self.pitch = self.pitch_distant
+            else:
+                self.camera_pos = self.camera_pos_closeup
+                self.yaw = self.yaw_closeup
+                self.pitch = self.pitch_closeup
+            
+
+            self.world_up = vec(0.0, 1.0, 0.0)
+            self.up = vec(0.0, 1.0, 0.0)
+            self.rgt = vec(0.0, 0.0, 0.0)
+            self.fwd = vec(0.0, 0.0, -1.0)
+            self.is_closeup = not self.is_closeup
             self.update_vectors()
 
     def handle_mouse_movement(self, offset_x, offset_y):
