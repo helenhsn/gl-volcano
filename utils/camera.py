@@ -8,13 +8,14 @@ class Camera:
                                  (vec(-1022.3244, 362.63553, 810.2243), 10.0, 80.0), # near koalas
                                  (vec(2000.0, 280.0, 2000.0), -20.0, -90.0), # above the water
                                  (vec(0.0, 1200.0, -2300.0), -20.0, -90.0), # behind the island
-                                 (vec(800.0, 610.0, 840.0), -10.0, 0.0)] # near the sheep all alone
+                                 (vec(800.0, 610.0, 840.0), -10.0, 0.0), # near the sheep all alone
+                                 (vec(850.0, 570.0, 810.0), 10.0, 5.0)] # near the sheep all alone
         self.index_camera = 1
 
         # current camera attributes (pos, yaw, pitch...) default = distant camera
-        self.camera_pos = np.copy(self.camera_positions[0][0]) # current camera pos
-        self.pitch = self.camera_positions[0][1]
-        self.yaw = self.camera_positions[0][2]
+        self.camera_pos = np.copy(self.camera_positions[5][0]) # current camera pos
+        self.pitch = self.camera_positions[5][1]
+        self.yaw = self.camera_positions[5][2]
 
         # camera referential
         self.world_up = vec(0.0, 1.0, 0.0)
