@@ -8,7 +8,12 @@ from utils.texture import Texture
 from math import pi, sin, cos
 
 class SmokeParticleSystem:
+    """
+    Class handling the smoke particles system.
+    """
     def __init__(self):
+
+        # initializing particles positions & speed
 
         self.nb_particles = 32768
         
@@ -63,7 +68,6 @@ class SmokeParticleSystem:
             self.buffers[name] = GL.glGenBuffers(1)
             GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, self.buffers[name])
 
-            # print(f"size bytes = {data.nbytes} && stride = {data.itemsize}")
             GL.glBufferData(GL.GL_SHADER_STORAGE_BUFFER, data.nbytes, data, GL.GL_DYNAMIC_DRAW)
             GL.glBindBufferBase(GL.GL_SHADER_STORAGE_BUFFER, buffer_count, self.buffers[name])
             

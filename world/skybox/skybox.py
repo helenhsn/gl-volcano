@@ -5,6 +5,10 @@ import OpenGL.GL as GL
 from utils.texture import Texture
 
 class Skybox:
+    """
+    Class handling the skybox. 
+    It simply uses a mesh of a cube and a 3D texture (a CUBEMAP) that is being bound to the cube.
+    """
     def __init__(self, size):
         self.size = size
         self.shader = Shader(vertex_source="world/skybox/shaders/skybox.vert", fragment_source="world/skybox/shaders/skybox.frag")

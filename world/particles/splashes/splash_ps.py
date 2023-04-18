@@ -8,8 +8,12 @@ from utils.texture import Texture
 from math import pi, sin, cos
 
 class SplashParticleSystem:
+    """
+    Class handling the splash particles system.
+    """
     def __init__(self):
 
+        # initializing particles positions & speed
         self.nb_particles = 1024
 
         self.velocities = np.zeros((self.nb_particles, 4), dtype=np.float32)

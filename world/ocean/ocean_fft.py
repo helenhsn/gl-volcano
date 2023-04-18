@@ -16,6 +16,9 @@ class TexturesFFT:
 
 
 class FFT:
+    """
+    Compute shaders pipeline that runs the FFT on the GPU.
+    """
     def __init__(self):
         repo = "world/ocean/shaders/cs/"
         format = ".comp.glsl"

@@ -2,6 +2,9 @@ import glfw
 from utils.transform import vec, translate, normalized, np, perspective
 
 class Camera:
+    """
+    Home made camera (based on Euler angles).
+    """
     def __init__(self):
         # different camera positions        camera_pos      pitch   yaw
         self.camera_positions = [(vec(0.0, 1000.0, 2200.0), -20.0, 95.0), # distant camera

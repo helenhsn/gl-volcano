@@ -191,10 +191,6 @@ def load(file, shader, tex_file=None, **params):
             new_mesh = Skinned(new_mesh, bone_nodes, bone_offsets)
         for node_to_populate in nodes_per_mesh_id[mesh_id]:
             node_to_populate.add(new_mesh)
-
-    # nb_triangles = sum((mesh.mNumFaces for mesh in scene.mMeshes))
-    # print('Loaded', file, '\t(%d meshes, %d faces, %d nodes, %d animations)' %
-    #       (scene.mNumMeshes, nb_triangles, len(nodes), scene.mNumAnimations))
     return [root_node]
 
 

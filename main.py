@@ -39,6 +39,7 @@ def main():
     CHUNK_SIZE = 256 #nb of vertices per chunk side
     
     viewer = Viewer(instructions, size=CHUNK_SIZE)
+    
     # start rendering loop
     viewer.run()
 

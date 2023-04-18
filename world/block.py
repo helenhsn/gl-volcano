@@ -5,6 +5,9 @@ import numpy as np
 import OpenGL.GL as GL
 
 class Chunk:
+    """
+    Chunk class. Each chunk contains a terrain grid and an ocean grid.
+    """
     def __init__(self, size, size_factor, N):
         twoN = 2*N
         number_grids = twoN * twoN

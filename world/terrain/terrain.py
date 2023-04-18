@@ -3,9 +3,14 @@ import OpenGL.GL as GL
 
 from utils.shaders import Shader
 from utils.texture import Texture
-from utils.transform import identity, translate              # standard Python OpenGL wrapper
 import numpy as np
+
 class Terrain:
+    """
+    Class that handles the terrain.
+    Compute the height & normal maps at the beginning by calling a compute shader.
+    These maps are then used inside the vertex & fragment shaders to color the terrain.
+    """
     def __init__(self, size, size_factor, model_matrices, N):
         self.size = size
         self.grid = Grid(Shader(vertex_source="world/terrain/shaders/terrain.vert", fragment_source="world/terrain/shaders/terrain.frag"), size=size, size_factor=size_factor)
