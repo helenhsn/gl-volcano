@@ -342,7 +342,7 @@ class Viewer(Node):
         rotated_sheep.add(keynode)
 
         # we add each sheep to the scene
-        positions_sheep = [((900, 548, 800), 170),
+        positions_sheep = [((1000, 548, 780), 170),
                            ((-1100, 320, -500), 80),
                            ((-1000, 320, -600), 180),
                            ((-1100, 320, -700), 300),
