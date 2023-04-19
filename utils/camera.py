@@ -11,8 +11,8 @@ class Camera:
                                  (vec(-1022.3244, 362.63553, 810.2243), 10.0, 80.0), # near koalas
                                  (vec(2120.0, 280.0, 2200.0), -20.0, -90.0), # above the water
                                  (vec(0.0, 1200.0, -2300.0), -20.0, -90.0), # behind the island
-                                 (vec(800.0, 610.0, 840.0), -10.0, 0.0), # near the sheep all alone
-                                 (vec(850.0, 570.0, 810.0), 10.0, 5.0)] # very near the sheep
+                                 (vec(0, 400, 1200), -30.0, 20.0), # near the sheep all alone
+                                 (vec(160, 340, 1107), 10.0, 20.0)] # really near the sheep
         self.index_camera = 1
 
         # current camera attributes (pos, yaw, pitch...) default = distant camera

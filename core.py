@@ -24,6 +24,7 @@ from world.skybox.skybox import Skybox
 from world.wind_turbine.wind_turbine import make_turbine
 from world.particles.smoke.smoke_ps import SmokeParticleSystem
 from world.particles.splashes.splash_ps import SplashParticleSystem
+from world.tree.tree import make_tree, move_tree
 
 # ------------  Node is the core drawable for hierarchical scene graphs -------
 class Node:
@@ -285,6 +286,11 @@ class Viewer(Node):
             move_turbine.add(turbine)
             self.turbine.append(move_turbine)
 
+        # we create one tree 
+        # decomment these following lines if you want to draw the tree
+        # self.tree = [make_tree(cosines, sines)]
+        # self.tree = move_tree(self.tree, [(1100.0, 310.0, 0.0)])[0]
+
         # initialize the koalas
         from utils.transform import quaternion_from_axis_angle
 
@@ -342,7 +348,7 @@ class Viewer(Node):
         rotated_sheep.add(keynode)
 
         # we add each sheep to the scene
-        positions_sheep = [((1000, 548, 780), 170),
+        positions_sheep = [((200, 315, 1100), 170),
                            ((-1100, 320, -500), 80),
                            ((-1000, 320, -600), 180),
                            ((-1100, 320, -700), 300),
@@ -400,6 +406,11 @@ class Viewer(Node):
             turbine.draw(view=view_matrix,
                          projection=projection_matrix,
                          w_camera_position=self.camera.camera_pos, light_pos=self.light_pos)
+        
+        # decomment these following lines if you want to draw the tree
+        # self.tree.draw(view=view_matrix,
+        #                projection=projection_matrix,
+        #                w_camera_position=self.camera.camera_pos)
 
         self.chunk.draw(view=view_matrix,
                         projection=projection_matrix,

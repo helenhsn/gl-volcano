@@ -48,4 +48,5 @@ class Terrain:
         cs.set_float("scale_factor", self.scale_factor)
         cs.set_mat4("model", model)
         GL.glDispatchCompute(self.size//16, self.size//16, 1)
+        GL.glMemoryBarrier(GL.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
         return map_text
